@@ -12,6 +12,7 @@
         "pub": "script/publish.sh",
         "build": "npm run build --workspaces --if-present && tsc",
         "test": "script/test",
+        "unit-test": "vitest run --config test/unit-test/vitest.config.ts",
         "start": "script/watch",
         "clean": "rm -rf dist node_modules *~ packages/*/{dist,node_modules}",
         "debug": "node --inspect-brk --max-old-space-size=4096 ./dist/index.js"
