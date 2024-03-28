@@ -1,6 +1,9 @@
 import * as os from "os";
 import * as _ from "lodash";
 
+import * as fs from "fs";
+import { rimraf } from "rimraf";
+
 import { inParallel } from "./lib/multicore";
 import { execAsync, Sample } from "./utils";
 import { Fixture, allFixtures } from "./fixtures";
@@ -49,8 +52,8 @@ async function main(sources: string[]) {
             console.error(`* Running ${tests.length} tests between ${fixtures.length} fixtures`);
 
             for (const fixture of fixtures) {
-                await execAsync(`rm -rf test/runs`);
-                await execAsync(`mkdir -p test/runs`);
+                await rimraf("test/runs");
+                fs.mkdirSync("test/runs", { recursive: true });
 
                 await fixture.setup();
             }
