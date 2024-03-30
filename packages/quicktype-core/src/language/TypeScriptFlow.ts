@@ -31,15 +31,6 @@ export const tsFlowOptions = Object.assign({}, javaScriptOptions, {
     preferUnknown: new BooleanOption("prefer-unknown", "Use type `unknown` instead of `any`", false)
 });
 
-const tsFlowTypeAnnotations = {
-    any: ": any",
-    anyArray: ": any[]",
-    anyMap: ": { [k: string]: any }",
-    string: ": string",
-    stringArray: ": string[]",
-    boolean: ": boolean"
-};
-
 export abstract class TypeScriptFlowBaseTargetLanguage extends JavaScriptTargetLanguage {
     protected getOptions(): Option<any>[] {
         return [
@@ -125,7 +116,7 @@ export abstract class TypeScriptFlowBaseRenderer extends JavaScriptRenderer {
         }
         return matchType<MultiWord>(
             t,
-            _anyType => singleWord("any"),
+            _anyType => singleWord(this.anyType),
             _nullType => singleWord("null"),
             _boolType => singleWord("boolean"),
             _integerType => singleWord("number"),
@@ -212,13 +203,13 @@ export abstract class TypeScriptFlowBaseRenderer extends JavaScriptRenderer {
     }
 
     protected deserializerFunctionLine(t: Type, name: Name): Sourcelike {
-        const jsonType = this._tsFlowOptions.rawType === "json" ? "string" : "any";
+        const jsonType = this._tsFlowOptions.rawType === "json" ? "string" : this.anyType;
         return ["function to", name, "(json: ", jsonType, "): ", this.sourceFor(t).source];
     }
 
     protected serializerFunctionLine(t: Type, name: Name): Sourcelike {
         const camelCaseName = modifySource(camelCase, name);
-        const returnType = this._tsFlowOptions.rawType === "json" ? "string" : "any";
+        const returnType = this._tsFlowOptions.rawType === "json" ? "string" : this.anyType;
         return ["function ", camelCaseName, "ToJson(value: ", this.sourceFor(t).source, "): ", returnType];
     }
 
@@ -230,9 +221,9 @@ export abstract class TypeScriptFlowBaseRenderer extends JavaScriptRenderer {
         return ["function cast<T>(val: any, typ: any): T", "function uncast<T>(val: T, typ: any): any"];
     }
 
-    protected get typeAnnotations(): JavaScriptTypeAnnotations {
-        throw new Error("not implemented");
-    }
+    protected abstract get anyType(): string;
+
+    protected abstract get typeAnnotations(): JavaScriptTypeAnnotations;
 
     protected emitConvertModule(): void {
         if (this._tsFlowOptions.justTypes) return;
@@ -254,18 +245,24 @@ export abstract class TypeScriptFlowBaseRenderer extends JavaScriptRenderer {
 }
 
 export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
+    protected defaultTsTypeAnnotations = {
+        string: ": string",
+        stringArray: ": string[]",
+        boolean: ": boolean"
+    };
+
     protected forbiddenNamesForGlobalNamespace(): string[] {
         return ["Array", "Date"];
     }
 
     protected deserializerFunctionLine(t: Type, name: Name): Sourcelike {
-        const jsonType = this._tsFlowOptions.rawType === "json" ? "string" : "any";
+        const jsonType = this._tsFlowOptions.rawType === "json" ? "string" : this.anyType;
         return ["public static to", name, "(json: ", jsonType, "): ", this.sourceFor(t).source];
     }
 
     protected serializerFunctionLine(t: Type, name: Name): Sourcelike {
         const camelCaseName = modifySource(camelCase, name);
-        const returnType = this._tsFlowOptions.rawType === "json" ? "string" : "any";
+        const returnType = this._tsFlowOptions.rawType === "json" ? "string" : this.anyType;
         return ["public static ", camelCaseName, "ToJson(value: ", this.sourceFor(t).source, "): ", returnType];
     }
 
@@ -273,8 +270,19 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
         return "export class Convert";
     }
 
+    protected get anyType(): string {
+        return this._tsFlowOptions.preferUnknown ? "unknown" : "any";
+    }
+
     protected get typeAnnotations(): JavaScriptTypeAnnotations {
-        return Object.assign({ never: ": never" }, tsFlowTypeAnnotations);
+        const anyType = this.anyType;
+        const anyTypeAnnotations = {
+            any: `: ${anyType}`,
+            anyArray: `: ${anyType}[]`,
+            anyMap: `: { [k: string]: ${anyType} }`
+        };
+
+        return Object.assign({ never: ": never" }, this.defaultTsTypeAnnotations, anyTypeAnnotations);
     }
 
     protected emitModuleExports(): void {
@@ -342,12 +350,29 @@ export class FlowTargetLanguage extends TypeScriptFlowBaseTargetLanguage {
 }
 
 export class FlowRenderer extends TypeScriptFlowBaseRenderer {
+    protected defaultFlowTypeAnnotations = {
+        string: ": string",
+        stringArray: ": string[]",
+        boolean: ": boolean"
+    };
+
     protected forbiddenNamesForGlobalNamespace(): string[] {
         return ["Class", "Date", "Object", "String", "Array", "JSON", "Error"];
     }
 
+    protected get anyType(): string {
+        return this._tsFlowOptions.preferUnknown ? "mixed" : "any";
+    }
+
     protected get typeAnnotations(): JavaScriptTypeAnnotations {
-        return Object.assign({ never: "" }, tsFlowTypeAnnotations);
+        const anyType = this.anyType;
+        const anyTypeAnnotations = {
+            any: `: ${anyType}`,
+            anyArray: `: ${anyType}[]`,
+            anyMap: `: { [k: string]: ${anyType} }`
+        };
+
+        return Object.assign({ never: ": never" }, this.defaultFlowTypeAnnotations, anyTypeAnnotations);
     }
 
     protected emitEnum(e: EnumType, enumName: Name): void {
