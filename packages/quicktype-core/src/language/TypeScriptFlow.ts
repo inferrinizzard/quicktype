@@ -27,7 +27,8 @@ export const tsFlowOptions = Object.assign({}, javaScriptOptions, {
         "prefer-const-values",
         "Use string instead of enum for string enums with single value",
         false
-    )
+    ),
+    preferUnknown: new BooleanOption("prefer-unknown", "Use type `unknown` instead of `any`", false)
 });
 
 const tsFlowTypeAnnotations = {
@@ -52,7 +53,8 @@ export abstract class TypeScriptFlowBaseTargetLanguage extends JavaScriptTargetL
             tsFlowOptions.rawType,
             tsFlowOptions.preferUnions,
             tsFlowOptions.preferTypes,
-            tsFlowOptions.preferConstValues
+            tsFlowOptions.preferConstValues,
+            tsFlowOptions.preferUnknown
         ];
     }
 
