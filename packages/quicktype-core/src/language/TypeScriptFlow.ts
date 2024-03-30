@@ -372,7 +372,7 @@ export class FlowRenderer extends TypeScriptFlowBaseRenderer {
             anyMap: `: { [k: string]: ${anyType} }`
         };
 
-        return Object.assign({ never: ": never" }, this.defaultFlowTypeAnnotations, anyTypeAnnotations);
+        return Object.assign({ never: ": empty" }, this.defaultFlowTypeAnnotations, anyTypeAnnotations);
     }
 
     protected emitEnum(e: EnumType, enumName: Name): void {
