@@ -713,6 +713,7 @@ async function addTypesInSchema(
         }
 
         const includedTypes = setFilter(schemaTypes, isTypeIncluded);
+        console.error({ schema, enumArray, isConst, typeSet, schemaTypes, includedTypes });
         let producedAttributesForNoCases: JSONSchemaAttributes[] | undefined = undefined;
 
         function forEachProducedAttribute(
@@ -934,12 +935,14 @@ async function addTypesInSchema(
 
             const numberAttributes = combineProducedAttributes(({ forNumber }) => forNumber);
 
-            for (const [name, kind] of [
-                ["null", "null"],
-                ["number", "double"],
-                ["integer", "integer"],
-                ["boolean", "bool"]
-            ] as [JSONSchemaType, PrimitiveTypeKind][]) {
+            const typeKindMap = {
+                null: "null",
+                number: "double",
+                integer: "integer",
+                boolean: "bool"
+            } as const;
+
+            for (const [name, kind] of Object.entries(typeKindMap) as [JSONSchemaType, PrimitiveTypeKind][]) {
                 if (!includedTypes.has(name)) continue;
 
                 const attributes = isNumberTypeKind(kind) ? numberAttributes : undefined;
@@ -953,10 +956,15 @@ async function addTypesInSchema(
             );
 
             if (needStringEnum || isConst) {
-                const cases = isConst
-                    ? [schema.const]
-                    : ((enumArray as any[]).filter(x => typeof x === "string") as string[]);
-                unionTypes.push(typeBuilder.getStringType(stringAttributes, StringTypes.fromCases(cases)));
+                const cases = isConst ? [schema.const] : (enumArray?.filter(x => typeof x === "string") as string[]);
+
+                if (includedTypes.has("string")) {
+                    unionTypes.push(typeBuilder.getStringType(stringAttributes, StringTypes.fromCases(cases)));
+                } else {
+                    const kind = typeKindMap[includedTypes.values().next().value as keyof typeof typeKindMap];
+                    const attributes = isNumberTypeKind(kind) ? numberAttributes : undefined;
+                    unionTypes.push(typeBuilder.getPrimitiveType(kind, attributes));
+                }
             } else if (includedTypes.has("string")) {
                 unionTypes.push(makeStringType(stringAttributes));
             }
