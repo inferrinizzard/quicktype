@@ -297,20 +297,29 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
         // enums with only one value are emitted as constants
         if (this._tsFlowOptions.preferConstValues && e.cases.size === 1) return;
 
-        if (this._tsFlowOptions.preferUnions) {
-            let items = "";
+        let hasUnsupportedEnumValue = false;
+        for (const item of e.cases.values()) {
+            if (typeof item === "boolean" || (typeof item === "number" && !Number.isInteger(item))) {
+                hasUnsupportedEnumValue = true;
+                break;
+            }
+        }
+
+        if (this._tsFlowOptions.preferUnions || hasUnsupportedEnumValue) {
+            let items: string[] = [];
             e.cases.forEach(item => {
-                if (items === "") {
-                    items += `"${utf16StringEscape(item)}"`;
-                    return;
+                if (typeof item === "string") {
+                    items.push(`"${utf16StringEscape(item)}"`);
+                } else {
+                    items.push(item);
                 }
-                items += ` | "${utf16StringEscape(item)}"`;
             });
-            this.emitLine("export type ", enumName, " = ", items, ";");
+            this.emitLine("export type ", enumName, " = ", items.join(" | "), ";");
         } else {
             this.emitBlock(["export enum ", enumName, " "], "", () => {
                 this.forEachEnumCase(e, "none", (name, jsonName) => {
-                    this.emitLine(name, ` = "${utf16StringEscape(jsonName)}",`);
+                    const item = typeof jsonName === "string" ? `"${utf16StringEscape(jsonName)}"` : jsonName;
+                    this.emitLine(name, ` = ${item},`);
                 });
             });
         }
