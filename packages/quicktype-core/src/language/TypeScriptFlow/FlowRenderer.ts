@@ -1,6 +1,4 @@
 import { type Name } from "../../Naming";
-import { utf16StringEscape } from "../../support/Strings";
-import { defined } from "../../support/Support";
 import { type ClassType, type EnumType } from "../../Type";
 import { type JavaScriptTypeAnnotations } from "../JavaScript";
 
@@ -18,18 +16,20 @@ export class FlowRenderer extends TypeScriptFlowBaseRenderer {
 
     protected emitEnum(e: EnumType, enumName: Name): void {
         this.emitDescription(this.descriptionForType(e));
-        const lines: string[][] = [];
-        this.forEachEnumCase(e, "none", (_, jsonName) => {
-            const maybeOr = lines.length === 0 ? "  " : "| ";
-            lines.push([maybeOr, '"', utf16StringEscape(jsonName), '"']);
-        });
-        defined(lines[lines.length - 1]).push(";");
+        const items: string[] = [];
+        this.forEachEnumCase(e, "none", (_, enumValue) => items.push(this.stringForPrimitive(enumValue)));
+
+        if (items.length === 1) {
+            this.emitLine("export type ", enumName, " =", items[0], ";");
+            return;
+        }
 
         this.emitLine("export type ", enumName, " =");
         this.indent(() => {
-            for (const line of lines) {
-                this.emitLine(line);
-            }
+            const [first, ...rest] = items;
+            this.emitLine(first);
+            rest.forEach(item => this.emitLine("| ", item));
+            this.emitItemOnce(";");
         });
     }
 

@@ -5,7 +5,7 @@ import { type MultiWord, type Sourcelike, modifySource, multiWord, parenIfNeeded
 import { camelCase, utf16StringEscape } from "../../support/Strings";
 import { panic } from "../../support/Support";
 import { type TargetLanguage } from "../../TargetLanguage";
-import { ArrayType, type ClassType, EnumType, type Type, UnionType } from "../../Type";
+import { ArrayType, type ClassType, EnumType, type SupportedEnumValue, type Type, UnionType } from "../../Type";
 import { matchType, nullableFromUnion } from "../../TypeUtils";
 import { JavaScriptRenderer, type JavaScriptTypeAnnotations } from "../JavaScript";
 
@@ -77,6 +77,16 @@ export abstract class TypeScriptFlowBaseRenderer extends JavaScriptRenderer {
                 return singleWord("string");
             }
         );
+    }
+
+    protected stringForPrimitive(value: SupportedEnumValue): string {
+        if (typeof value === "string") {
+            return `"${utf16StringEscape(value)}"`;
+        } else if (value === null) {
+            return "null";
+        } else {
+            return `${value}`;
+        }
     }
 
     protected abstract emitEnum(e: EnumType, enumName: Name): void;

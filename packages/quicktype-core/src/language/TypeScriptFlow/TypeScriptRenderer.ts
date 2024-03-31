@@ -1,6 +1,6 @@
 import { type Name } from "../../Naming";
 import { type Sourcelike, modifySource } from "../../Source";
-import { camelCase, utf16StringEscape } from "../../support/Strings";
+import { camelCase } from "../../support/Strings";
 import { type ClassType, type EnumType, type Type } from "../../Type";
 import { isNamedType } from "../../TypeUtils";
 import { type JavaScriptTypeAnnotations } from "../JavaScript";
@@ -54,21 +54,20 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
         // enums with only one value are emitted as constants
         if (this._tsFlowOptions.preferConstValues && e.cases.size === 1) return;
 
-        if (this._tsFlowOptions.preferUnions) {
-            let items = "";
-            e.cases.forEach(item => {
-                if (items === "") {
-                    items += `"${utf16StringEscape(item)}"`;
-                    return;
-                }
+        const hasUnsupportedEnumValue = [...e.cases.values()].some(
+            enumCase => typeof enumCase === "boolean" || (typeof enumCase === "number" && !Number.isInteger(enumCase))
+        );
 
-                items += ` | "${utf16StringEscape(item)}"`;
+        if (this._tsFlowOptions.preferUnions || hasUnsupportedEnumValue) {
+            const items: string[] = [];
+            e.cases.forEach(enumCase => {
+                items.push(this.stringForPrimitive(enumCase));
             });
-            this.emitLine("export type ", enumName, " = ", items, ";");
+            this.emitLine("export type ", enumName, " = ", items.join(" | "), ";");
         } else {
             this.emitBlock(["export enum ", enumName, " "], "", () => {
-                this.forEachEnumCase(e, "none", (name, jsonName) => {
-                    this.emitLine(name, ` = "${utf16StringEscape(jsonName)}",`);
+                this.forEachEnumCase(e, "none", (enumKey, enumValue) => {
+                    this.emitLine(enumKey, ` = "${this.stringForPrimitive(enumValue)}",`);
                 });
             });
         }
