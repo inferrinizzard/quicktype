@@ -238,7 +238,13 @@ export class JavaScriptRenderer extends ConvenienceRenderer {
                 this.emitLine('"', name, '": [');
                 this.indent(() => {
                     this.forEachEnumCase(e, "none", (_caseName, jsonName) => {
-                        this.emitLine(`"${utf16StringEscape(jsonName)}",`);
+                        if (jsonName === null) {
+                            this.emitLine(`null,`);
+                        } else if (typeof jsonName === "string") {
+                            this.emitLine(`"${utf16StringEscape(jsonName)}",`);
+                        } else {
+                            this.emitLine(`${jsonName},`);
+                        }
                     });
                 });
                 this.emitLine("],");

@@ -103,6 +103,7 @@ export const emptyTypeAttributes: TypeAttributes = new Map();
 
 export type CombinationKind = "union" | "intersect";
 
+// FIXME: make this rest type
 export function combineTypeAttributes(kind: CombinationKind, attributeArray: TypeAttributes[]): TypeAttributes;
 export function combineTypeAttributes(kind: CombinationKind, a: TypeAttributes, b: TypeAttributes): TypeAttributes;
 export function combineTypeAttributes(

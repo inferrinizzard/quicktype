@@ -707,6 +707,9 @@ async function addTypesInSchema(
                 return enumArray.find(predicate) !== undefined;
             }
             if (isConst) {
+                if (name === "null" && schema.const === null) {
+                    return true;
+                }
                 return name === (schema.type ?? typeof schema.const);
             }
             return true;
@@ -917,29 +920,37 @@ async function addTypesInSchema(
         const needStringEnum =
             includedTypes.has("string") &&
             enumArray !== undefined &&
-            enumArray.find((x: any) => typeof x === "string") !== undefined;
+            enumArray.find(x => typeof x === "string") !== undefined;
         const needUnion =
             typeSet !== undefined ||
             schema.properties !== undefined ||
             schema.additionalProperties !== undefined ||
             schema.items !== undefined ||
             schema.required !== undefined ||
-            enumArray !== undefined ||
-            isConst;
+            enumArray !== undefined;
 
         const types: TypeRef[] = [];
+
+        if (isConst) {
+            types.push(
+                // use enum with single case for const values
+                typeBuilder.getEnumType(emptyTypeAttributes, new Set([schema.const]) as unknown as ReadonlySet<string>)
+            );
+        }
 
         if (needUnion) {
             const unionTypes: TypeRef[] = [];
 
             const numberAttributes = combineProducedAttributes(({ forNumber }) => forNumber);
 
-            for (const [name, kind] of [
-                ["null", "null"],
-                ["number", "double"],
-                ["integer", "integer"],
-                ["boolean", "bool"]
-            ] as [JSONSchemaType, PrimitiveTypeKind][]) {
+            const typeKindMap = {
+                null: "null",
+                number: "double",
+                integer: "integer",
+                boolean: "bool"
+            } as const;
+
+            for (const [name, kind] of Object.entries(typeKindMap) as [JSONSchemaType, PrimitiveTypeKind][]) {
                 if (!includedTypes.has(name)) continue;
 
                 const attributes = isNumberTypeKind(kind) ? numberAttributes : undefined;
@@ -952,10 +963,8 @@ async function addTypesInSchema(
                 combineProducedAttributes(({ forString }) => forString)
             );
 
-            if (needStringEnum || isConst) {
-                const cases = isConst
-                    ? [schema.const]
-                    : ((enumArray as any[]).filter(x => typeof x === "string") as string[]);
+            if (needStringEnum) {
+                const cases = enumArray?.filter(x => typeof x === "string") as string[];
                 unionTypes.push(typeBuilder.getStringType(stringAttributes, StringTypes.fromCases(cases)));
             } else if (includedTypes.has("string")) {
                 unionTypes.push(makeStringType(stringAttributes));

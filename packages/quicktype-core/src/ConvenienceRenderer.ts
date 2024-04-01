@@ -485,7 +485,13 @@ export abstract class ConvenienceRenderer extends Renderer {
             if (isFixed) {
                 name = new FixedName(defined(assignedName));
             } else {
-                name = this.makeNameForEnumCase(e, enumName, caseName, assignedName);
+                // FIXME: remove toString
+                name = this.makeNameForEnumCase(
+                    e,
+                    enumName,
+                    caseName === null ? "null" : caseName.toString(),
+                    assignedName
+                );
             }
             names.set(caseName, ns.add(name));
         }
