@@ -714,7 +714,6 @@ async function addTypesInSchema(
         }
 
         const includedTypes = setFilter(schemaTypes, isTypeIncluded);
-        console.error({ schema, enumArray, isConst, typeSet, schemaTypes, includedTypes });
         let producedAttributesForNoCases: JSONSchemaAttributes[] | undefined = undefined;
 
         function forEachProducedAttribute(

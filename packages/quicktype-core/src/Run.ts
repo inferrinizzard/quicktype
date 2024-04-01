@@ -20,7 +20,6 @@ import { flattenStrings } from "./rewrites/FlattenStrings";
 import { makeTransformations } from "./MakeTransformations";
 import { TransformedStringTypeKind } from "./Type";
 import { type Comment } from "./support/Comments";
-import { replaceConstValues } from "./rewrites/ReplaceConstValues";
 
 export function getTargetLanguage(nameOrInstance: string | TargetLanguage): TargetLanguage {
     if (typeof nameOrInstance === "object") {
