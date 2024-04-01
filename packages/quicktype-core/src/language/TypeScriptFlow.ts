@@ -299,7 +299,7 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
 
         let hasUnsupportedEnumValue = false;
         for (const item of e.cases.values()) {
-            if (typeof item === "boolean" || (typeof item === "number" && !Number.isInteger(item))) {
+            if (typeof item === "boolean" || (typeof item === "number" && !Number.isInteger(item)) || item === null) {
                 hasUnsupportedEnumValue = true;
                 break;
             }
@@ -310,6 +310,8 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
             e.cases.forEach(item => {
                 if (typeof item === "string") {
                     items.push(`"${utf16StringEscape(item)}"`);
+                } else if (item === null) {
+                    items.push("null");
                 } else {
                     items.push(item);
                 }

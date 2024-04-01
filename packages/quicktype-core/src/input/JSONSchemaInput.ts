@@ -707,7 +707,9 @@ async function addTypesInSchema(
                 return enumArray.find(predicate) !== undefined;
             }
             if (isConst) {
-                // FIXME: support null const
+                if (name === "null" && schema.const === null) {
+                    return true;
+                }
                 return name === (schema.type ?? typeof schema.const);
             }
             return true;
