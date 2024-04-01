@@ -21,7 +21,8 @@ import {
     allUpperWordStyle,
     allLowerWordStyle,
     stringEscape,
-    originalWord
+    originalWord,
+    capitalize
 } from "../support/Strings";
 import { assertNever, panic, defined } from "../support/Support";
 import { Sourcelike, MultiWord, multiWord, singleWord, parenIfNeeded, modifySource } from "../Source";
@@ -478,9 +479,21 @@ export class PythonRenderer extends ConvenienceRenderer {
     protected emitEnum(t: EnumType): void {
         this.declareType(t, () => {
             this.forEachEnumCase(t, "none", (name, jsonName) => {
-                this.emitLine([name, " = ", this.string(jsonName)]);
+                this.emitLine([name, " = ", this.constEnumValue(jsonName)]);
             });
         });
+    }
+
+    protected constEnumValue(enumValue: string): Sourcelike {
+        if (typeof enumValue === "string") {
+            return this.string(enumValue);
+        } else if (enumValue === null) {
+            return "None";
+        } else if (typeof enumValue === "boolean") {
+            return capitalize(`${enumValue}`);
+        } else {
+            return `${enumValue}`;
+        }
     }
 
     protected emitImports(): void {

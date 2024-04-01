@@ -48,13 +48,9 @@ export type ForEachPosition = "first" | "last" | "middle" | "only";
 
 class EmitContext {
     private _lastNewline?: NewlineSource;
-    // @ts-ignore: Initialized in startEmit, which is called from the constructor
     private _emitted: Sourcelike[];
-    // @ts-ignore: Initialized in startEmit, which is called from the constructor
     private _currentEmitTarget: Sourcelike[];
-    // @ts-ignore: Initialized in startEmit, which is called from the constructor
     private _numBlankLinesNeeded: number;
-    // @ts-ignore: Initialized in startEmit, which is called from the constructor
     private _preventBlankLine: boolean;
 
     constructor() {
