@@ -240,8 +240,10 @@ export class JavaScriptRenderer extends ConvenienceRenderer {
                     this.forEachEnumCase(e, "none", (_caseName, jsonName) => {
                         if (jsonName === null) {
                             this.emitLine(`null,`);
-                        } else {
+                        } else if (typeof jsonName === "string") {
                             this.emitLine(`"${utf16StringEscape(jsonName)}",`);
+                        } else {
+                            this.emitLine(`${jsonName},`);
                         }
                     });
                 });
