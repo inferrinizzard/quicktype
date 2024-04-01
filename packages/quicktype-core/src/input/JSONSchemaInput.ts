@@ -55,6 +55,7 @@ import { minMaxAttributeProducer } from "../attributes/Constraints";
 import { minMaxLengthAttributeProducer } from "../attributes/Constraints";
 import { patternAttributeProducer } from "../attributes/Constraints";
 import { uriSchemaAttributesProducer } from "../attributes/URIAttributes";
+import { constValueTypeAttributeKind } from "../attributes/ConstValue";
 
 export enum PathElementKind {
     Root,
@@ -918,7 +919,7 @@ async function addTypesInSchema(
         const needStringEnum =
             includedTypes.has("string") &&
             enumArray !== undefined &&
-            enumArray.find((x: any) => typeof x === "string") !== undefined;
+            enumArray.find(x => typeof x === "string") !== undefined;
         const needUnion =
             typeSet !== undefined ||
             schema.properties !== undefined ||
@@ -958,11 +959,18 @@ async function addTypesInSchema(
             if (needStringEnum || isConst) {
                 const cases = isConst ? [schema.const] : (enumArray?.filter(x => typeof x === "string") as string[]);
 
+                unionTypes.push(typeBuilder.getStringType(stringAttributes, StringTypes.fromCases(cases)));
                 if (includedTypes.has("string")) {
                     unionTypes.push(typeBuilder.getStringType(stringAttributes, StringTypes.fromCases(cases)));
                 } else {
                     const kind = typeKindMap[includedTypes.values().next().value as keyof typeof typeKindMap];
-                    const attributes = isNumberTypeKind(kind) ? numberAttributes : undefined;
+                    const baseAttributes = isNumberTypeKind(kind) ? numberAttributes : emptyTypeAttributes;
+
+                    const attributes = combineTypeAttributes(
+                        "union",
+                        baseAttributes,
+                        constValueTypeAttributeKind.makeAttributes(schema.const)
+                    );
                     unionTypes.push(typeBuilder.getPrimitiveType(kind, attributes));
                 }
             } else if (includedTypes.has("string")) {

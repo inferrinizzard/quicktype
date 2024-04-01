@@ -20,6 +20,7 @@ import { flattenStrings } from "./rewrites/FlattenStrings";
 import { makeTransformations } from "./MakeTransformations";
 import { TransformedStringTypeKind } from "./Type";
 import { type Comment } from "./support/Comments";
+import { replaceConstValues } from "./rewrites/ReplaceConstValues";
 
 export function getTargetLanguage(nameOrInstance: string | TargetLanguage): TargetLanguage {
     if (typeof nameOrInstance === "object") {
@@ -441,6 +442,7 @@ class Run implements RunContext {
         }
 
         const enumInference = allInputs.needSchemaProcessing ? "all" : this._options.inferEnums ? "infer" : "none";
+        this.time("replace const values", () => (graph = replaceConstValues(this, graph)));
         this.time("expand strings", () => (graph = expandStrings(this, graph, enumInference)));
         this.time(
             "flatten unions",
