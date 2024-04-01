@@ -934,6 +934,7 @@ async function addTypesInSchema(
         if (isConst) {
             types.push(
                 // use enum with single case for const values
+                // FIXME: remove double cast
                 typeBuilder.getEnumType(emptyTypeAttributes, new Set([schema.const]) as unknown as ReadonlySet<string>)
             );
         }

@@ -1,0 +1,42 @@
+{
+    "id": "http://json-schema.org/geo",
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "description": "Testing JSON Schema const values",
+    "type": "object",
+    "properties": {
+        "AtestConstString": {
+            "const": "str"
+        },
+        "BtestConstInteger": {
+            "const": 1
+        },
+        "CtestConstFloat": {
+            "const": 2.3
+        },
+        "DtestConstBoolean": {
+            "const": false
+        },
+        "EtestConstNull": {
+            "const": null
+        },
+        "FtestEnumString": {
+            "enum": ["a", "b", "c"]
+        },
+        "GtestEnumInteger": {
+            "enum": [4, 5, 6]
+        },
+        "HtestEnumMixed": {
+            "enum": [true, 7.8, "foo"]
+        },
+        "ItestNumber": {
+            "type": "number"
+        },
+        "JtestString": {
+            "type": "string"
+        },
+        "KtestBoolean": {
+            "type": "boolean"
+        }
+    },
+    "additionalProperties": false
+}
