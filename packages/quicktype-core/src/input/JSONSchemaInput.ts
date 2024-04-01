@@ -55,7 +55,6 @@ import { minMaxAttributeProducer } from "../attributes/Constraints";
 import { minMaxLengthAttributeProducer } from "../attributes/Constraints";
 import { patternAttributeProducer } from "../attributes/Constraints";
 import { uriSchemaAttributesProducer } from "../attributes/URIAttributes";
-import { constValueTypeAttributeKind } from "../attributes/ConstValue";
 
 export enum PathElementKind {
     Root,
@@ -708,6 +707,7 @@ async function addTypesInSchema(
                 return enumArray.find(predicate) !== undefined;
             }
             if (isConst) {
+                // FIXME: support null const
                 return name === (schema.type ?? typeof schema.const);
             }
             return true;
@@ -926,10 +926,16 @@ async function addTypesInSchema(
             schema.additionalProperties !== undefined ||
             schema.items !== undefined ||
             schema.required !== undefined ||
-            enumArray !== undefined ||
-            isConst;
+            enumArray !== undefined;
 
         const types: TypeRef[] = [];
+
+        if (isConst) {
+            types.push(
+                // use enum with single case for const values
+                typeBuilder.getEnumType(emptyTypeAttributes, new Set([schema.const]) as unknown as ReadonlySet<string>)
+            );
+        }
 
         if (needUnion) {
             const unionTypes: TypeRef[] = [];
@@ -956,23 +962,9 @@ async function addTypesInSchema(
                 combineProducedAttributes(({ forString }) => forString)
             );
 
-            if (needStringEnum || isConst) {
-                const cases = isConst ? [schema.const] : (enumArray?.filter(x => typeof x === "string") as string[]);
-
+            if (needStringEnum) {
+                const cases = enumArray?.filter(x => typeof x === "string") as string[];
                 unionTypes.push(typeBuilder.getStringType(stringAttributes, StringTypes.fromCases(cases)));
-                if (includedTypes.has("string")) {
-                    unionTypes.push(typeBuilder.getStringType(stringAttributes, StringTypes.fromCases(cases)));
-                } else {
-                    const kind = typeKindMap[includedTypes.values().next().value as keyof typeof typeKindMap];
-                    const baseAttributes = isNumberTypeKind(kind) ? numberAttributes : emptyTypeAttributes;
-
-                    const attributes = combineTypeAttributes(
-                        "union",
-                        baseAttributes,
-                        constValueTypeAttributeKind.makeAttributes(schema.const)
-                    );
-                    unionTypes.push(typeBuilder.getPrimitiveType(kind, attributes));
-                }
             } else if (includedTypes.has("string")) {
                 unionTypes.push(makeStringType(stringAttributes));
             }

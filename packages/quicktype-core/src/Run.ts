@@ -442,7 +442,6 @@ class Run implements RunContext {
         }
 
         const enumInference = allInputs.needSchemaProcessing ? "all" : this._options.inferEnums ? "infer" : "none";
-        this.time("replace const values", () => (graph = replaceConstValues(this, graph)));
         this.time("expand strings", () => (graph = expandStrings(this, graph, enumInference)));
         this.time(
             "flatten unions",
