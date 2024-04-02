@@ -917,6 +917,16 @@ encoder.dateEncodingStrategy = .formatted(formatter)`);
         });
     }
 
+    protected stringForEnumValue(enumValue: string): Sourcelike {
+        if (typeof enumValue === "string") {
+            return `"${stringEscape(enumValue)}"`;
+        } else if (enumValue === null) {
+            return "nil";
+        } else {
+            return `${enumValue}`;
+        }
+    }
+
     private renderEnumDefinition(e: EnumType, enumName: Name): void {
         this.startFile(enumName);
 
@@ -928,14 +938,14 @@ encoder.dateEncodingStrategy = .formatted(formatter)`);
 
         if (this._options.justTypes) {
             this.emitBlockWithAccess(["enum ", enumName, protocolString], () => {
-                this.forEachEnumCase(e, "none", name => {
-                    this.emitLine("case ", name);
+                this.forEachEnumCase(e, "none", enumKey => {
+                    this.emitLine("case ", enumKey);
                 });
             });
         } else {
             this.emitBlockWithAccess(["enum ", enumName, protocolString], () => {
-                this.forEachEnumCase(e, "none", (name, jsonName) => {
-                    this.emitLine("case ", name, ' = "', stringEscape(jsonName), '"');
+                this.forEachEnumCase(e, "none", (enumKey, enumValue) => {
+                    this.emitLine("case ", enumKey, " = ", this.stringForEnumValue(enumValue));
                 });
             });
         }
