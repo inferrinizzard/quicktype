@@ -28,6 +28,7 @@ import {
     EnumType,
     MapType,
     ObjectType,
+    type SupportedEnumValue,
     type Type,
     type TypeKind,
     UnionType
@@ -738,6 +739,8 @@ export abstract class ConvenienceRenderer extends Renderer {
         const caseNames = defined(this._caseNamesStoreView).get(e);
         return defined(caseNames.get(caseName));
     }
+
+    protected abstract stringForPrimitive(value: SupportedEnumValue): string;
 
     protected forEachUnionMember(
         u: UnionType,
