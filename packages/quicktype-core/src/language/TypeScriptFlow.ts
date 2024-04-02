@@ -160,6 +160,16 @@ export abstract class TypeScriptFlowBaseRenderer extends JavaScriptRenderer {
         );
     }
 
+    protected stringForEnumValue(enumCase: string): string {
+        if (typeof enumCase === "string") {
+            return `"${utf16StringEscape(enumCase)}"`;
+        } else if (enumCase === null) {
+            return "null";
+        } else {
+            return enumCase;
+        }
+    }
+
     protected abstract emitEnum(e: EnumType, enumName: Name): void;
 
     protected abstract emitClassBlock(c: ClassType, className: Name): void;
@@ -306,22 +316,14 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
         }
 
         if (this._tsFlowOptions.preferUnions || hasUnsupportedEnumValue) {
-            let items: string[] = [];
-            e.cases.forEach(item => {
-                if (typeof item === "string") {
-                    items.push(`"${utf16StringEscape(item)}"`);
-                } else if (item === null) {
-                    items.push("null");
-                } else {
-                    items.push(item);
-                }
-            });
+            const items: string[] = [];
+            e.cases.forEach(enumCase => items.push(this.stringForEnumValue(enumCase)));
             this.emitLine("export type ", enumName, " = ", items.join(" | "), ";");
         } else {
             this.emitBlock(["export enum ", enumName, " "], "", () => {
-                this.forEachEnumCase(e, "none", (name, jsonName) => {
-                    const item = typeof jsonName === "string" ? `"${utf16StringEscape(jsonName)}"` : jsonName;
-                    this.emitLine(name, ` = ${item},`);
+                this.forEachEnumCase(e, "none", (enumKey, enumCase) => {
+                    const item = this.stringForEnumValue(enumCase);
+                    this.emitLine(enumKey, ` = ${item},`);
                 });
             });
         }
@@ -361,18 +363,21 @@ export class FlowRenderer extends TypeScriptFlowBaseRenderer {
 
     protected emitEnum(e: EnumType, enumName: Name): void {
         this.emitDescription(this.descriptionForType(e));
-        const lines: string[][] = [];
-        this.forEachEnumCase(e, "none", (_, jsonName) => {
-            const maybeOr = lines.length === 0 ? "  " : "| ";
-            lines.push([maybeOr, '"', utf16StringEscape(jsonName), '"']);
-        });
-        defined(lines[lines.length - 1]).push(";");
+        const items: string[] = [];
+        this.forEachEnumCase(e, "none", (_, enumValue) => items.push(this.stringForEnumValue(enumValue)));
+
+        if (items.length === 1) {
+            this.emitLine("export type ", enumName, " =", items[0], ";");
+            return;
+        }
 
         this.emitLine("export type ", enumName, " =");
         this.indent(() => {
-            for (const line of lines) {
-                this.emitLine(line);
-            }
+            const { 0: first, [items.length - 1]: last, ...rest } = items;
+
+            this.emitLine(first);
+            Object.values<string>(rest).forEach(item => this.emitLine("| ", item));
+            this.emitLine("| ", last, ";");
         });
     }
 

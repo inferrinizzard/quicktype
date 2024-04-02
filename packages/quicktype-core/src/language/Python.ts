@@ -476,15 +476,7 @@ export class PythonRenderer extends ConvenienceRenderer {
         });
     }
 
-    protected emitEnum(t: EnumType): void {
-        this.declareType(t, () => {
-            this.forEachEnumCase(t, "none", (name, jsonName) => {
-                this.emitLine([name, " = ", this.constEnumValue(jsonName)]);
-            });
-        });
-    }
-
-    protected constEnumValue(enumValue: string): Sourcelike {
+    protected stringForEnumValue(enumValue: string): Sourcelike {
         if (typeof enumValue === "string") {
             return this.string(enumValue);
         } else if (enumValue === null) {
@@ -494,6 +486,14 @@ export class PythonRenderer extends ConvenienceRenderer {
         } else {
             return `${enumValue}`;
         }
+    }
+
+    protected emitEnum(t: EnumType): void {
+        this.declareType(t, () => {
+            this.forEachEnumCase(t, "none", (name, jsonName) => {
+                this.emitLine([name, " = ", this.stringForEnumValue(jsonName)]);
+            });
+        });
     }
 
     protected emitImports(): void {
