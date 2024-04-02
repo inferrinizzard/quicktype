@@ -181,13 +181,13 @@ export class TypeScriptZodRenderer extends ConvenienceRenderer {
         }
     }
 
-    protected stringForEnumValue(enumCase: string): Sourcelike {
-        if (typeof enumCase === "string") {
-            return `"${utf16StringEscape(enumCase)}"`;
-        } else if (enumCase === null) {
+    protected stringForEnumValue(enumValue: string): Sourcelike {
+        if (typeof enumValue === "string") {
+            return `"${utf16StringEscape(enumValue)}"`;
+        } else if (enumValue === null) {
             return "null";
         } else {
-            return enumCase;
+            return `${enumValue}`;
         }
     }
 

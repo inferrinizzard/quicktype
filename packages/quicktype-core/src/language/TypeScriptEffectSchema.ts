@@ -12,7 +12,6 @@ import {
     firstUpperWordStyle,
     isLetterOrUnderscore,
     splitIntoWords,
-    stringEscape,
     utf16StringEscape
 } from "../support/Strings";
 import { TargetLanguage } from "../TargetLanguage";
@@ -161,14 +160,24 @@ export class TypeScriptEffectSchemaRenderer extends ConvenienceRenderer {
         this.emitLine("}) {}");
     }
 
+    protected stringForEnumValue(enumValue: string): Sourcelike {
+        if (typeof enumValue === "string") {
+            return `"${utf16StringEscape(enumValue)}"`;
+        } else if (enumValue === null) {
+            return "null";
+        } else {
+            return `${enumValue}`;
+        }
+    }
+
     private emitEnum(e: EnumType, enumName: Name): void {
         this.emittedObjects.add(enumName);
         this.ensureBlankLine();
         this.emitDescription(this.descriptionForType(e));
         this.emitLine("\nexport const ", enumName, " = ", "S.literal(");
         this.indent(() =>
-            this.forEachEnumCase(e, "none", (_, jsonName) => {
-                this.emitLine('"', stringEscape(jsonName), '",');
+            this.forEachEnumCase(e, "none", (_, enumValue) => {
+                this.emitLine(this.stringForEnumValue(enumValue), ",");
             })
         );
         this.emitLine(");");
