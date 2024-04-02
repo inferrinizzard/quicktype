@@ -26,7 +26,6 @@ import {
     firstUpperWordStyle,
     isLetterOrUnderscore,
     splitIntoWords,
-    stringEscape,
     utf16StringEscape
 } from "../support/Strings";
 import { panic } from "../support/Support";
@@ -182,13 +181,23 @@ export class TypeScriptZodRenderer extends ConvenienceRenderer {
         }
     }
 
+    protected stringForEnumValue(enumCase: string): Sourcelike {
+        if (typeof enumCase === "string") {
+            return `"${utf16StringEscape(enumCase)}"`;
+        } else if (enumCase === null) {
+            return "null";
+        } else {
+            return enumCase;
+        }
+    }
+
     protected emitEnum(e: EnumType, enumName: Name): void {
         this.ensureBlankLine();
         this.emitDescription(this.descriptionForType(e));
         this.emitLine("\nexport const ", enumName, "Schema = ", "z.enum([");
         this.indent(() =>
-            this.forEachEnumCase(e, "none", (_, jsonName) => {
-                this.emitLine('"', stringEscape(jsonName), '",');
+            this.forEachEnumCase(e, "none", (_, enumValue) => {
+                this.emitLine(this.stringForEnumValue(enumValue), ",");
             })
         );
         this.emitLine("]);");
@@ -328,7 +337,9 @@ export class TypeScriptZodRenderer extends ConvenienceRenderer {
             if (passNum > MAX_PASSES) {
                 //giving up
                 order.push(...deferredIndices);
-                console.warn("Exceeded maximum number of passes when determining output order, output may contain forward references");
+                console.warn(
+                    "Exceeded maximum number of passes when determining output order, output may contain forward references"
+                );
             }
         } while (indices.length > 0 && passNum <= MAX_PASSES);
 

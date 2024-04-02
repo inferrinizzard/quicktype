@@ -12,7 +12,7 @@ import {
     JavaScriptTypeAnnotations,
     legalizeName
 } from "./JavaScript";
-import { defined, panic } from "../support/Support";
+import { panic } from "../support/Support";
 import { TargetLanguage } from "../TargetLanguage";
 import { RenderContext } from "../Renderer";
 import { isES3IdentifierStart } from "./JavaScriptUnicodeMaps";
@@ -160,7 +160,7 @@ export abstract class TypeScriptFlowBaseRenderer extends JavaScriptRenderer {
         );
     }
 
-    protected stringForEnumValue(enumCase: string): string {
+    protected stringForEnumValue(enumCase: string): Sourcelike {
         if (typeof enumCase === "string") {
             return `"${utf16StringEscape(enumCase)}"`;
         } else if (enumCase === null) {
@@ -316,7 +316,7 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
         }
 
         if (this._tsFlowOptions.preferUnions || hasUnsupportedEnumValue) {
-            const items: string[] = [];
+            const items: Sourcelike[] = [];
             e.cases.forEach(enumCase => items.push(this.stringForEnumValue(enumCase)));
             this.emitLine("export type ", enumName, " = ", items.join(" | "), ";");
         } else {
@@ -363,7 +363,7 @@ export class FlowRenderer extends TypeScriptFlowBaseRenderer {
 
     protected emitEnum(e: EnumType, enumName: Name): void {
         this.emitDescription(this.descriptionForType(e));
-        const items: string[] = [];
+        const items: Sourcelike[] = [];
         this.forEachEnumCase(e, "none", (_, enumValue) => items.push(this.stringForEnumValue(enumValue)));
 
         if (items.length === 1) {
@@ -376,7 +376,7 @@ export class FlowRenderer extends TypeScriptFlowBaseRenderer {
             const { 0: first, [items.length - 1]: last, ...rest } = items;
 
             this.emitLine(first);
-            Object.values<string>(rest).forEach(item => this.emitLine("| ", item));
+            Object.values<Sourcelike>(rest).forEach(item => this.emitLine("| ", item));
             this.emitLine("| ", last, ";");
         });
     }
