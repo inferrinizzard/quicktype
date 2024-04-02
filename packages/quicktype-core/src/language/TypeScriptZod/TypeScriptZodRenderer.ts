@@ -13,7 +13,6 @@ import {
     firstUpperWordStyle,
     isLetterOrUnderscore,
     splitIntoWords,
-    stringEscape,
     utf16StringEscape
 } from "../../support/Strings";
 import { panic } from "../../support/Support";
@@ -25,6 +24,7 @@ import {
     type EnumType,
     ObjectType,
     SetOperationType,
+    type SupportedEnumValue,
     type Type
 } from "../../Type";
 import { matchType } from "../../TypeUtils";
@@ -143,16 +143,37 @@ export class TypeScriptZodRenderer extends ConvenienceRenderer {
         }
     }
 
+    protected stringForPrimitive(value: SupportedEnumValue): string {
+        if (typeof value === "string") {
+            return `"${utf16StringEscape(value)}"`;
+        } else if (value === null) {
+            return "null";
+        } else {
+            return `${value}`;
+        }
+    }
+
     protected emitEnum(e: EnumType, enumName: Name): void {
         this.ensureBlankLine();
         this.emitDescription(this.descriptionForType(e));
-        this.emitLine("\nexport const ", enumName, "Schema = ", "z.enum([");
-        this.indent(() =>
-            this.forEachEnumCase(e, "none", (_, jsonName) => {
-                this.emitLine('"', stringEscape(jsonName), '",');
-            })
-        );
-        this.emitLine("]);");
+        if ([...e.cases.values()].every(enumValue => typeof enumValue === "string")) {
+            this.emitLine("\nexport const ", enumName, "Schema = ", "z.enum([");
+            this.indent(() =>
+                this.forEachEnumCase(e, "none", (_, enumValue) => {
+                    this.emitLine(this.stringForPrimitive(enumValue), ",");
+                })
+            );
+            this.emitLine("]);");
+        } else {
+            this.emitLine("\nexport const ", enumName, "Schema = ", "z.union([");
+            this.indent(() =>
+                this.forEachEnumCase(e, "none", (_, enumValue) => {
+                    this.emitLine("z.literal(", this.stringForPrimitive(enumValue), "),");
+                })
+            );
+            this.emitLine("]);");
+        }
+
         if (!this._options.justSchema) {
             this.emitLine("export type ", enumName, " = z.infer<typeof ", enumName, "Schema>;");
         }
