@@ -146,7 +146,7 @@ function sourceLineLength(source: Source, names: ReadonlyMap<Name, string>): num
                 .map((s: Source) => sourceLineLength(s, names))
                 .reduce((a: number, b: number) => a + b, 0);
         case "table":
-            return panic("Table must not occur within a  line.");
+            return panic("Table must not occur within a line.");
         case "annotated":
             return sourceLineLength(source.source, names);
         case "name":
@@ -255,6 +255,7 @@ export function serializeRenderResult(
                 currentLine.push(source.modifier(serialized[0]));
                 break;
             default:
+                console.trace({ source });
                 return assertNever(source);
         }
     }

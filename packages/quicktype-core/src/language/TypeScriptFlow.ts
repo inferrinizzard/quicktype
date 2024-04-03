@@ -323,7 +323,7 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
             this.emitBlock(["export enum ", enumName, " "], "", () => {
                 this.forEachEnumCase(e, "none", (enumKey, enumCase) => {
                     const item = this.stringForEnumValue(enumCase);
-                    this.emitLine(enumKey, ` = ${item},`);
+                    this.emitLine(enumKey, " = ", item, ",");
                 });
             });
         }
@@ -363,21 +363,25 @@ export class FlowRenderer extends TypeScriptFlowBaseRenderer {
 
     protected emitEnum(e: EnumType, enumName: Name): void {
         this.emitDescription(this.descriptionForType(e));
-        const items: Sourcelike[] = [];
-        this.forEachEnumCase(e, "none", (_, enumValue) => items.push(this.stringForEnumValue(enumValue)));
 
-        if (items.length === 1) {
-            this.emitLine("export type ", enumName, " =", items[0], ";");
+        if (e.cases.size === 1) {
+            this.emitLine("export type ", enumName, " = ", this.stringForEnumValue(e.cases.values().next().value), ";");
             return;
         }
 
         this.emitLine("export type ", enumName, " =");
         this.indent(() => {
-            const { 0: first, [items.length - 1]: last, ...rest } = items;
+            this.forEachEnumCase(e, "none", (_, enumValue, position) => {
+                const item = this.stringForEnumValue(enumValue);
 
-            this.emitLine(first);
-            Object.values<Sourcelike>(rest).forEach(item => this.emitLine("| ", item));
-            this.emitLine("| ", last, ";");
+                if (position === "first") {
+                    this.emitLine(item);
+                } else if (position === "last") {
+                    this.emitLine("| ", item, ";");
+                } else {
+                    this.emitLine("| ", item);
+                }
+            });
         });
     }
 
