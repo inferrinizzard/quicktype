@@ -16,20 +16,24 @@ export class FlowRenderer extends TypeScriptFlowBaseRenderer {
 
     protected emitEnum(e: EnumType, enumName: Name): void {
         this.emitDescription(this.descriptionForType(e));
-        const items: string[] = [];
-        this.forEachEnumCase(e, "none", (_, enumValue) => items.push(this.stringForPrimitive(enumValue)));
-
-        if (items.length === 1) {
-            this.emitLine("export type ", enumName, " =", items[0], ";");
+        if (e.cases.size === 1) {
+            this.emitLine("export type ", enumName, " = ", this.stringForPrimitive(e.cases.values().next().value), ";");
             return;
         }
 
         this.emitLine("export type ", enumName, " =");
         this.indent(() => {
-            const [first, ...rest] = items;
-            this.emitLine(first);
-            rest.forEach(item => this.emitLine("| ", item));
-            this.emitItemOnce(";");
+            this.forEachEnumCase(e, "none", (_, enumValue, position) => {
+                const item = this.stringForPrimitive(enumValue);
+
+                if (position === "first") {
+                    this.emitLine(item);
+                } else if (position === "last") {
+                    this.emitLine("| ", item, ";");
+                } else {
+                    this.emitLine("| ", item);
+                }
+            });
         });
     }
 

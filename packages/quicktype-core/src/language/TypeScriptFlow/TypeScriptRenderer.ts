@@ -67,7 +67,7 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
         } else {
             this.emitBlock(["export enum ", enumName, " "], "", () => {
                 this.forEachEnumCase(e, "none", (enumKey, enumValue) => {
-                    this.emitLine(enumKey, ` = "${this.stringForPrimitive(enumValue)}",`);
+                    this.emitLine(enumKey, " + ", this.stringForPrimitive(enumValue), ",");
                 });
             });
         }
