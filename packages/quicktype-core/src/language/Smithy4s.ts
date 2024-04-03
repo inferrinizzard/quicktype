@@ -2,7 +2,7 @@ import { anyTypeIssueAnnotation, nullTypeIssueAnnotation } from "../Annotation";
 import { ConvenienceRenderer, ForbiddenWordsInfo } from "../ConvenienceRenderer";
 import { Name, Namer, funPrefixNamer } from "../Naming";
 import { EnumOption, Option, StringOption, OptionValues, getOptionValues } from "../RendererOptions";
-import { Sourcelike, maybeAnnotated } from "../Source";
+import { Sourcelike, maybeAnnotated, modifySource } from "../Source";
 import {
     allLowerWordStyle,
     allUpperWordStyle,
@@ -12,7 +12,8 @@ import {
     isLetterOrUnderscore,
     isNumeric,
     legalizeCharacters,
-    splitIntoWords
+    splitIntoWords,
+    stringEscape
 } from "../support/Strings";
 import { assertNever } from "../support/Support";
 import { TargetLanguage } from "../TargetLanguage";
@@ -205,10 +206,10 @@ export class Smithy4sRenderer extends ConvenienceRenderer {
             delimiter === "curly"
                 ? ["{", "}"]
                 : delimiter === "paren"
-                  ? ["(", ")"]
-                  : delimiter === "none"
-                    ? ["", ""]
-                    : ["{", "})"];
+                ? ["(", ")"]
+                : delimiter === "none"
+                ? ["", ""]
+                : ["{", "})"];
         this.emitLine(line, " ", open);
         this.indent(f);
         this.emitLine(close);
@@ -396,29 +397,31 @@ export class Smithy4sRenderer extends ConvenienceRenderer {
         });
     }
 
+    protected stringForEnumValue(enumCase: string): Sourcelike {
+        if (typeof enumCase === "string") {
+            return `"${stringEscape(enumCase)}"`;
+        } else if (enumCase === null) {
+            return "null";
+        } else {
+            return `${enumCase}`;
+        }
+    }
+
     protected emitEnumDefinition(e: EnumType, enumName: Name): void {
         this.emitDescription(this.descriptionForType(e));
 
+        // use `intEnum` if all enum values are ints
+        const enumKeyword = [...e.cases.values()].every(enumValue => Number.isInteger(enumValue)) ? "intEnum" : "enum";
+
         this.ensureBlankLine();
-        this.emitItem(["enum ", enumName, " { "]);
-        let count = e.cases.size;
+        this.emitLine(enumKeyword, " ", enumName, " { ");
 
-        this.forEachEnumCase(e, "none", (name, jsonName) => {
-            // if (!(jsonName == "")) {
-            /*                 const backticks = 
-                                    shouldAddBacktick(jsonName) || 
-                                    jsonName.includes(" ") || 
-                                    !isNaN(parseInt(jsonName.charAt(0)))
-                                if (backticks) {this.emitItem("`")} else  */
-            this.emitLine();
-
-            this.emitItem([name, ' = "', jsonName, '"']);
-
-            //                if (backticks) {this.emitItem("`")}
-            if (--count > 0) this.emitItem([","]);
-            //} else {
-            //--count
-            //}
+        this.indent(() => {
+            this.forEachEnumCase(e, "none", (enumKey, enumValue, position) => {
+                // https://smithy.io/2.0/spec/simple-types.html#enum-validation
+                const enumKeyString = modifySource(name => name.toUpperCase().replace(/^_/, ""), enumKey);
+                this.emitLine(enumKeyString, " = ", this.stringForEnumValue(enumValue), position !== "last" ? "," : "");
+            });
         });
 
         this.ensureBlankLine();

@@ -695,7 +695,7 @@ export abstract class ConvenienceRenderer extends Renderer {
         return defined(caseNames.get(caseName));
     }
 
-    protected abstract stringForEnumValue(enumCase: string): Sourcelike;
+    protected abstract stringForEnumValue(enumValue: string): Sourcelike;
 
     protected forEachUnionMember(
         u: UnionType,
