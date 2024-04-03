@@ -411,13 +411,13 @@ export class Smithy4sRenderer extends ConvenienceRenderer {
         });
     }
 
-    protected stringForEnumValue(enumCase: string): Sourcelike {
-        if (typeof enumCase === "string") {
-            return `"${stringEscape(enumCase)}"`;
-        } else if (enumCase === null) {
+    protected stringForEnumValue(enumValue: string): Sourcelike {
+        if (typeof enumValue === "string") {
+            return `"${stringEscape(enumValue)}"`;
+        } else if (enumValue === null) {
             return "null";
         } else {
-            return `${enumCase}`;
+            return `${enumValue}`;
         }
     }
 
