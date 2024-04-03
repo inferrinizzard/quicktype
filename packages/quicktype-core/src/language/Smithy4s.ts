@@ -2,7 +2,7 @@ import { anyTypeIssueAnnotation, nullTypeIssueAnnotation } from "../Annotation";
 import { ConvenienceRenderer, ForbiddenWordsInfo } from "../ConvenienceRenderer";
 import { Name, Namer, funPrefixNamer } from "../Naming";
 import { EnumOption, Option, StringOption, OptionValues, getOptionValues } from "../RendererOptions";
-import { Sourcelike, maybeAnnotated, modifySource } from "../Source";
+import { Sourcelike, maybeAnnotated } from "../Source";
 import {
     allLowerWordStyle,
     allUpperWordStyle,
@@ -190,7 +190,21 @@ export class Smithy4sRenderer extends ConvenienceRenderer {
     }
 
     protected makeEnumCaseNamer(): Namer {
-        return funPrefixNamer("upper", s => s.replace(" ", "")); // TODO - add backticks where appropriate
+        // https://smithy.io/2.0/spec/simple-types.html#enum-validation
+        const enumKeyNamingFunction = (enumKey: string) => {
+            let name = stringEscape(enumKey);
+
+            // all caps, convert all spaces to _, remove leading _
+            name = name.toUpperCase().replace(/[_ .]/g, "_").replace(/^_/, "");
+
+            if (/^\d/.test(name)) {
+                name = "The" + name;
+            }
+
+            return name;
+        };
+
+        return funPrefixNamer("enum-cases", enumKeyNamingFunction);
     }
 
     protected emitDescriptionBlock(lines: Sourcelike[]): void {
@@ -418,9 +432,7 @@ export class Smithy4sRenderer extends ConvenienceRenderer {
 
         this.indent(() => {
             this.forEachEnumCase(e, "none", (enumKey, enumValue, position) => {
-                // https://smithy.io/2.0/spec/simple-types.html#enum-validation
-                const enumKeyString = modifySource(name => name.toUpperCase().replace(/^_/, ""), enumKey);
-                this.emitLine(enumKeyString, " = ", this.stringForEnumValue(enumValue), position !== "last" ? "," : "");
+                this.emitLine(enumKey, " = ", this.stringForEnumValue(enumValue), position !== "last" ? "," : "");
             });
         });
 
