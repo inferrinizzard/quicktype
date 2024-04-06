@@ -1,6 +1,6 @@
 import { mapMap, EqualityMap } from "collection-utils";
 
-import { PrimitiveTypeKind, Type, ClassProperty, MaybeTypeIdentity } from "./Type";
+import { PrimitiveTypeKind, Type, ClassProperty, MaybeTypeIdentity, EnumCases } from "./Type";
 import { combineTypeAttributesOfTypes } from "./TypeUtils";
 import {
     TypeGraph,
@@ -107,7 +107,7 @@ export class TypeReconstituter<TBuilder extends BaseGraphRewriteBuilder> {
         this.register(this.builderForNewType().getPrimitiveType(kind, this._typeAttributes, this._forwardingRef));
     }
 
-    getEnumType(cases: ReadonlySet<string>): void {
+    getEnumType(cases: EnumCases): void {
         this.register(this.builderForNewType().getEnumType(this._typeAttributes, cases, this._forwardingRef));
     }
 

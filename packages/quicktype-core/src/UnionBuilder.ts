@@ -1,6 +1,15 @@
 import { mapMerge, mapUpdateInto, mapMap, setUnionInto } from "collection-utils";
 
-import { TypeKind, PrimitiveStringTypeKind, Type, UnionType, PrimitiveTypeKind, isPrimitiveTypeKind } from "./Type";
+import {
+    TypeKind,
+    PrimitiveStringTypeKind,
+    Type,
+    UnionType,
+    PrimitiveTypeKind,
+    isPrimitiveTypeKind,
+    type EnumCases,
+    type SupportedEnumValue
+} from "./Type";
 import { matchTypeExhaustive } from "./TypeUtils";
 import {
     TypeAttributes,
@@ -24,7 +33,7 @@ export interface UnionTypeProvider<TArrayData, TObjectData> {
     readonly arrayData: TArrayData;
     readonly objectData: TObjectData;
 
-    readonly enumCases: ReadonlySet<string>;
+    readonly enumCases: EnumCases;
 
     getMemberKinds(): TypeAttributeMap<TypeKind>;
 
@@ -81,7 +90,7 @@ export class UnionAccumulator<TArray, TObject> implements UnionTypeProvider<TArr
     readonly arrayData: TArray[] = [];
     readonly objectData: TObject[] = [];
 
-    private readonly _enumCases: Set<string> = new Set();
+    private readonly _enumCases: Set<SupportedEnumValue> = new Set();
 
     private _lostTypeAttributes = false;
 
@@ -158,7 +167,7 @@ export class UnionAccumulator<TArray, TObject> implements UnionTypeProvider<TArr
         addAttributesToBuilder(this._nonStringTypeAttributes, "object", attributes);
     }
 
-    addEnum(cases: ReadonlySet<string>, attributes: TypeAttributes): void {
+    addEnum(cases: EnumCases, attributes: TypeAttributes): void {
         const maybeStringAttributes = this._stringTypeAttributes.get("string");
         if (maybeStringAttributes !== undefined) {
             addAttributesToBuilder(this._stringTypeAttributes, "string", attributes);
@@ -175,7 +184,7 @@ export class UnionAccumulator<TArray, TObject> implements UnionTypeProvider<TArr
         this.addFullStringType(attributes, StringTypes.fromCase(s, count));
     }
 
-    get enumCases(): ReadonlySet<string> {
+    get enumCases(): EnumCases {
         return this._enumCases;
     }
 

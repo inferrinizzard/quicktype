@@ -9,7 +9,17 @@ import {
     mapSome
 } from "collection-utils";
 
-import { Type, ClassType, EnumType, UnionType, TypeKind, ClassProperty, MapType, ObjectType } from "./Type";
+import {
+    Type,
+    ClassType,
+    EnumType,
+    UnionType,
+    TypeKind,
+    ClassProperty,
+    MapType,
+    ObjectType,
+    type SupportedEnumValue
+} from "./Type";
 import { separateNamedTypes, nullableFromUnion, matchTypeExhaustive, isNamedType } from "./TypeUtils";
 import { Namespace, Name, Namer, FixedName, SimpleName, DependencyName, keywordNamespace } from "./Naming";
 import { Renderer, BlankLineConfig, RenderContext, ForEachPosition } from "./Renderer";
@@ -480,15 +490,17 @@ export abstract class ConvenienceRenderer extends Renderer {
         let names = new Map<string, Name>();
         const accessorNames = enumCaseNames(e, this.targetLanguage.name);
         for (const caseName of e.cases) {
-            const [assignedName, isFixed] = getAccessorName(accessorNames, caseName);
+            const stringifiedCaseName =
+                typeof caseName === "string" ? caseName : caseName === null ? "null" : typeof caseName;
+
+            const [assignedName, isFixed] = getAccessorName(accessorNames, stringifiedCaseName);
             let name: Name;
             if (isFixed) {
                 name = new FixedName(defined(assignedName));
             } else {
-                // FIXME: remove toString
-                name = this.makeNameForEnumCase(e, enumName, caseName.toString(), assignedName);
+                name = this.makeNameForEnumCase(e, enumName, stringifiedCaseName, assignedName);
             }
-            names.set(caseName, ns.add(name));
+            names.set(stringifiedCaseName, ns.add(name));
         }
         defined(this._caseNamesStoreView).set(e, names);
     }
@@ -709,7 +721,8 @@ export abstract class ConvenienceRenderer extends Renderer {
     protected forEachEnumCase(
         e: EnumType,
         blankLocations: BlankLineConfig,
-        f: (name: Name, jsonName: string, position: ForEachPosition) => void
+        // FIXME: convert `enumValue` type to SupportEnumValue
+        f: (name: Name, enumValue: string, position: ForEachPosition) => void
     ): void {
         const caseNames = defined(this._caseNamesStoreView).get(e);
         const sortedCaseNames = mapSortBy(caseNames, n => defined(this.names.get(n)));

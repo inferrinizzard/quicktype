@@ -31,12 +31,13 @@ import {
     classTypeIdentity,
     unionTypeIdentity,
     intersectionTypeIdentity,
-    MaybeTypeIdentity,
-    TypeIdentity,
-    TransformedStringTypeKind,
+    type MaybeTypeIdentity,
+    type TypeIdentity,
+    type TransformedStringTypeKind,
     isPrimitiveStringTypeKind,
     transformedStringTypeKinds,
-    TypeKind
+    type TypeKind,
+    type EnumCases
 } from "./Type";
 import { TypeGraph, TypeRef, makeTypeRef, derefTypeRef, typeRefIndex, assertTypeRefGraph } from "./TypeGraph";
 import {
@@ -338,7 +339,7 @@ export class TypeBuilder {
         );
     }
 
-    getEnumType(attributes: TypeAttributes, cases: ReadonlySet<string>, forwardingRef?: TypeRef): TypeRef {
+    getEnumType(attributes: TypeAttributes, cases: EnumCases, forwardingRef?: TypeRef): TypeRef {
         return this.getOrAddType(
             () => enumTypeIdentity(attributes, cases),
             tr => new EnumType(tr, this.typeGraph, cases),
