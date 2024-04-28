@@ -28,6 +28,9 @@ export function getStream(inputStream: Readable, opts: Options = {}) {
             reject(err);
         };
 
+        if (!inputStream.once) {
+            console.log({ inputStream, once: inputStream.once });
+        }
         stream = bufferStream(opts);
         inputStream.once("error", error);
         inputStream.pipe(stream);
