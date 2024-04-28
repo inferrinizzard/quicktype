@@ -7,6 +7,8 @@ import { messageError, panic } from "../../index";
 
 const isURL = require("is-url");
 
+const fetch = process.env.CI ? require("cross-fetch").default : (global as any).fetch ?? require("cross-fetch").default;
+
 interface HttpHeaders {
     [key: string]: string;
 }
@@ -39,6 +41,7 @@ export async function readableFromFileOrURL(fileOrURL: string, httpHeaders?: str
             const response = await fetch(fileOrURL, {
                 headers: parseHeaders(httpHeaders)
             });
+
             return defined(response.body) as unknown as Readable;
         } else if (isNode) {
             if (fileOrURL === "-") {
