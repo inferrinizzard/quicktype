@@ -7,7 +7,7 @@ import { messageError, panic } from "../../index";
 
 const isURL = require("is-url");
 
-const fetch = (global as any).fetch ?? require("cross-fetch").default;
+const fetch = require("cross-fetch");
 
 interface HttpHeaders {
     [key: string]: string;
