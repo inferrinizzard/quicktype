@@ -26,7 +26,8 @@ import {
     isNumberTypeKind,
     GenericClassProperty,
     TypeKind,
-    ObjectType
+    ObjectType,
+    type EnumCases
 } from "../Type";
 import { setOperationMembersRecursively, matchTypeExhaustive, makeGroupsToFlatten } from "../TypeUtils";
 import { assert, defined, panic, mustNotHappen } from "../support/Support";
@@ -228,7 +229,7 @@ class IntersectionAccumulator
         return [this._objectProperties, this._additionalPropertyTypes];
     }
 
-    get enumCases(): ReadonlySet<string> {
+    get enumCases(): EnumCases {
         return panic("We don't support enums in intersections");
     }
 

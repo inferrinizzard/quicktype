@@ -9,7 +9,7 @@ import {
     areEqual
 } from "collection-utils";
 
-import { PrimitiveType } from "../Type";
+import { type EnumCases, PrimitiveType } from "../Type";
 import { stringTypesForType } from "../TypeUtils";
 import { TypeGraph, TypeRef } from "../TypeGraph";
 import { GraphRewriteBuilder } from "../GraphRewriting";
@@ -26,7 +26,7 @@ const REQUIRED_OVERLAP = 3 / 4;
 export type EnumInference = "none" | "all" | "infer";
 
 type EnumInfo = {
-    cases: ReadonlySet<string>;
+    cases: EnumCases;
     numValues: number;
 };
 
@@ -34,11 +34,7 @@ function isOwnEnum({ numValues, cases }: EnumInfo): boolean {
     return numValues >= MIN_LENGTH_FOR_ENUM && cases.size < Math.sqrt(numValues);
 }
 
-function enumCasesOverlap(
-    newCases: ReadonlySet<string>,
-    existingCases: ReadonlySet<string>,
-    newAreSubordinate: boolean
-): boolean {
+function enumCasesOverlap(newCases: EnumCases, existingCases: EnumCases, newAreSubordinate: boolean): boolean {
     const smaller = newAreSubordinate ? newCases.size : Math.min(newCases.size, existingCases.size);
     const overlap = setIntersect(newCases, existingCases).size;
     return overlap >= smaller * REQUIRED_OVERLAP;
@@ -76,7 +72,7 @@ export function expandStrings(ctx: RunContext, graph: TypeGraph, inference: Enum
     }
 
     const enumInfos = new Map<PrimitiveType, EnumInfo>();
-    const enumSets: ReadonlySet<string>[] = [];
+    const enumSets: EnumCases[] = [];
 
     if (inference !== "none") {
         for (const t of allStrings) {
@@ -85,7 +81,7 @@ export function expandStrings(ctx: RunContext, graph: TypeGraph, inference: Enum
             enumInfos.set(t, enumInfo);
         }
 
-        function findOverlap(newCases: ReadonlySet<string>, newAreSubordinate: boolean): number {
+        function findOverlap(newCases: EnumCases, newAreSubordinate: boolean): number {
             return enumSets.findIndex(s => enumCasesOverlap(newCases, s, newAreSubordinate));
         }
 
