@@ -688,7 +688,8 @@ export const SwiftLanguage: Language = {
         "date-time.schema",
         "class-with-additional.schema",
         "class-map-union.schema",
-        "vega-lite.schema"
+        "vega-lite.schema",
+        "top-level-primitive.schema"
     ],
     rendererOptions: { "support-linux": "true" },
     quickTestRendererOptions: [
@@ -784,7 +785,8 @@ export const TypeScriptLanguage: Language = {
         { "declare-unions": "true" },
         ["pokedex.json", { "prefer-types": "true" }],
         { "acronym-style": "pascal" },
-        { converters: "all-objects" }
+        { converters: "all-objects" },
+        { readonly: "true" }
     ],
     sourceFiles: ["src/language/TypeScript.ts"]
 };
@@ -1099,7 +1101,8 @@ export const KotlinLanguage: Language = {
         "keyword-enum.schema",
         "keyword-unions.schema",
         // Klaxon does not support top-level primitives
-        "top-level-enum.schema"
+        "top-level-enum.schema",
+        "top-level-primitive.schema"
     ],
     skipMiscJSON: false,
     rendererOptions: {},
@@ -1182,7 +1185,8 @@ export const KotlinJacksonLanguage: Language = {
         "keyword-enum.schema",
         "keyword-unions.schema",
         // Klaxon does not support top-level primitives
-        "top-level-enum.schema"
+        "top-level-enum.schema",
+        "top-level-primitive.schema"
     ],
     skipMiscJSON: false,
     rendererOptions: { framework: "jackson" },
@@ -1632,4 +1636,65 @@ export const TypeScriptEffectSchemaLanguage: Language = {
     rendererOptions: {},
     quickTestRendererOptions: [{ "array-type": "list" }],
     sourceFiles: ["src/language/TypeScriptEffectSchema.ts"]
+};
+
+export const ElixirLanguage: Language = {
+    name: "elixir",
+    base: "test/fixtures/elixir",
+    setupCommand: "mix deps.get",
+    compileCommand: "mix compile",
+    runCommand(sample: string) {
+        return `mix run main.exs "${sample}"`;
+    },
+    diffViaSchema: true,
+    skipDiffViaSchema: [
+        "e53b5.json",
+        "cda6c.json",
+        "f22f5.json",
+        "e8b04.json",
+        "c8c7e.json",
+        "be234.json",
+        "ae7f0.json",
+        "8592b.json",
+        "7fbfb.json",
+        "76ae1.json",
+        "6de06.json",
+        "4d6fb.json",
+        "34702.json",
+        "2df80.json",
+        "29f47.json",
+        "27332.json",
+        "00c36.json",
+        "bug863.json",
+        "bug427.json",
+        "keywords.json",
+        "kitchen-sink.json",
+        "reddit.json"
+    ],
+    allowMissingNull: false,
+    features: ["enum", "no-defaults", "strict-optional"],
+    output: "QuickType.ex",
+    topLevel: "TopLevel",
+    skipJSON: [
+        // Some field names are too long to be expressed as atoms and some contain invalid characters.
+        "blns-object.json"
+    ],
+    skipMiscJSON: false,
+    skipSchema: [
+        // The error occurs because a guard clause that references TopLevel is compiled before TopLevel itself. To fix this, put
+        // TopLevel before Bar, but this doesn't address the actual problem if for example a pattern match to Bar was in TopLevel.
+        "mutually-recursive.schema",
+
+        // Struct keys cannot be enforced at runtime in Elixir and their values will just be set to null.
+        "strict-optional.schema",
+        "required.schema",
+        "intersection.schema",
+
+        // The test incorrectly succeeds due to the emitter being permissive for unions that contain only primitives. A future enhancement
+        // for the Elixir emitter could be a user-controlled 'strict' mode that pattern matches even on unions of only primitive types.
+        "go-schema-pattern-properties.schema"
+    ],
+    rendererOptions: {},
+    quickTestRendererOptions: [],
+    sourceFiles: ["src/language/Elixir.ts"]
 };
