@@ -1,10 +1,10 @@
-import { mapMap } from "collection-utils";
+import { mapMap, mapMergeInto } from "collection-utils";
 
 import { type JSONSchemaAttributes, type JSONSchemaType, type Ref } from "../input/JSONSchemaInput";
 import { type JSONSchema } from "../input/JSONSchemaStore";
 import { type EnumType } from "../Type";
 
-import { type AccessorNames, lookupKey, makeAccessorNames } from "./AccessorNames";
+import { type AccessorEntry, type AccessorNames, lookupKey, makeAccessorNames } from "./AccessorNames";
 import { TypeAttributeKind } from "./TypeAttributes";
 
 class EnumValuesTypeAttributeKind extends TypeAttributeKind<AccessorNames> {
@@ -14,6 +14,15 @@ class EnumValuesTypeAttributeKind extends TypeAttributeKind<AccessorNames> {
 
     public makeInferred(_: AccessorNames): undefined {
         return undefined;
+    }
+
+    public combine(other: AccessorNames[]): AccessorNames {
+        const result = new Map<string, AccessorEntry>();
+        for (const m of other) {
+            mapMergeInto(result, m);
+        }
+
+        return result;
     }
 }
 

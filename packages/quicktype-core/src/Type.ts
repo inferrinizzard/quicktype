@@ -75,6 +75,14 @@ export type NamedTypeKind = "class" | "enum" | "union";
 export type TypeKind = PrimitiveTypeKind | NamedTypeKind | "array" | "object" | "map" | "intersection";
 export type ObjectTypeKind = "object" | "map" | "class";
 
+export const jsonSchemaTypeToPrimitiveTypeKindMap = {
+    string: "string",
+    null: "null",
+    boolean: "bool",
+    integer: "integer",
+    number: "double"
+} as const;
+
 export const transformedStringTypeKinds = new Set(
     Object.getOwnPropertyNames(transformedStringTypeTargetTypeKinds)
 ) as ReadonlySet<TransformedStringTypeKind>;

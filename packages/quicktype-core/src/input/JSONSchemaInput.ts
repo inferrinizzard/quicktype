@@ -30,7 +30,7 @@ import {
 } from "../attributes/Constraints";
 // eslint-disable-next-line import/no-cycle
 import { descriptionAttributeProducer } from "../attributes/Description";
-import { enumValuesAttributeProducer } from "../attributes/EnumValues";
+import { enumValuesAttributeProducer, enumValuesTypeAttributeKind } from "../attributes/EnumValues";
 import { StringTypes } from "../attributes/StringTypes";
 import {
     type TypeAttributes,
@@ -44,9 +44,9 @@ import { messageAssert, messageError } from "../Messages";
 import { type RunContext } from "../Run";
 import { type StringMap, assert, assertNever, defined, panic, parseJSON } from "../support/Support";
 import {
-    type PrimitiveTypeKind,
     type TransformedStringTypeKind,
     isNumberTypeKind,
+    jsonSchemaTypeToPrimitiveTypeKindMap,
     transformedStringTypeTargetTypeKindsMap
 } from "../Type";
 import { type TypeBuilder } from "../TypeBuilder";
@@ -54,6 +54,8 @@ import { type TypeRef } from "../TypeGraph";
 
 import { type Input } from "./Inputs";
 import { type JSONSchema, JSONSchemaStore } from "./JSONSchemaStore";
+// eslint-disable-next-line import/no-cycle
+import { findJsonSchemaPrimitiveType } from "./JSONSchemaUtils";
 
 // There's a cyclic import here. Ignoring now because it requires a large refactor.
 // skipcq: JS-E1008
@@ -533,10 +535,10 @@ export const schemaTypeDict = {
     number: true,
     array: true,
     object: true
-};
+} as const;
 export type JSONSchemaType = keyof typeof schemaTypeDict;
 
-const schemaTypes = Object.getOwnPropertyNames(schemaTypeDict) as JSONSchemaType[];
+const schemaTypes = Object.keys(schemaTypeDict) as JSONSchemaType[];
 
 export interface JSONSchemaAttributes {
     forCases?: TypeAttributes[];
@@ -728,6 +730,7 @@ async function addTypesInSchema(
 
     async function convertToType(schema: StringMap, loc: Location, typeAttributes: TypeAttributes): Promise<TypeRef> {
         const enumArray = Array.isArray(schema.enum) ? schema.enum : undefined;
+        const enumArrayTypes = enumArray?.map(findJsonSchemaPrimitiveType);
         const isConst = schema.const !== undefined;
         const typeSet = definedMap(schema.type, t => checkTypeList(t, loc));
 
@@ -737,20 +740,7 @@ async function addTypesInSchema(
             }
 
             if (enumArray !== undefined) {
-                let predicate: (x: unknown) => boolean;
-                switch (name) {
-                    case "null":
-                        predicate = (x): x is null => x === null;
-                        break;
-                    case "integer":
-                        predicate = (x): x is number => typeof x === "number" && x === Math.floor(x);
-                        break;
-                    default:
-                        predicate = (x): x is typeof name => typeof x === name;
-                        break;
-                }
-
-                return enumArray.find(predicate) !== undefined;
+                return enumArrayTypes?.find(enumType => enumType === name) !== undefined;
             }
 
             if (isConst) {
@@ -990,17 +980,25 @@ async function addTypesInSchema(
 
             const numberAttributes = combineProducedAttributes(({ forNumber }) => forNumber);
 
-            for (const [name, kind] of [
-                ["null", "null"],
-                ["number", "double"],
-                ["integer", "integer"],
-                ["boolean", "bool"]
-            ] as Array<[JSONSchemaType, PrimitiveTypeKind]>) {
-                if (!includedTypes.has(name)) continue;
+            enumArray?.forEach((enumValue, i) => {
+                const enumType = enumArrayTypes?.[i];
+                // skip strings and undefined
+                if (enumType === "string" || enumType === undefined) {
+                    return;
+                }
 
-                const attributes = isNumberTypeKind(kind) ? numberAttributes : undefined;
-                unionTypes.push(typeBuilder.getPrimitiveType(kind, attributes));
-            }
+                const primitiveTypeKind = jsonSchemaTypeToPrimitiveTypeKindMap[enumType];
+                const baseAttributes = isNumberTypeKind(primitiveTypeKind) ? numberAttributes : emptyTypeAttributes;
+                const attributes = combineTypeAttributes(
+                    "intersect",
+                    enumValuesTypeAttributeKind.makeAttributes(
+                        new Map().set(enumValue === null ? "null" : enumValue.toString(), enumValue)
+                    ),
+                    baseAttributes
+                );
+
+                unionTypes.push(typeBuilder.getPrimitiveType(primitiveTypeKind, attributes));
+            });
 
             const stringAttributes = combineTypeAttributes(
                 "union",
