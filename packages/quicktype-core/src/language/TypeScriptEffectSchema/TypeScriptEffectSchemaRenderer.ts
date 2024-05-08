@@ -13,12 +13,19 @@ import {
     firstUpperWordStyle,
     isLetterOrUnderscore,
     splitIntoWords,
-    stringEscape,
     utf16StringEscape
 } from "../../support/Strings";
 import { panic } from "../../support/Support";
 import { type TargetLanguage } from "../../TargetLanguage";
-import { ArrayType, type ClassProperty, EnumType, MapType, type ObjectType, type Type } from "../../Type";
+import {
+    ArrayType,
+    type ClassProperty,
+    EnumType,
+    MapType,
+    type ObjectType,
+    type SupportedEnumValue,
+    type Type
+} from "../../Type";
 import { matchType } from "../../TypeUtils";
 import { legalizeName } from "../JavaScript/utils";
 
@@ -136,14 +143,24 @@ export class TypeScriptEffectSchemaRenderer extends ConvenienceRenderer {
         this.emitLine("}) {}");
     }
 
+    protected stringForPrimitive(value: SupportedEnumValue): string {
+        if (typeof value === "string") {
+            return `"${utf16StringEscape(value)}"`;
+        } else if (value === null) {
+            return "null";
+        } else {
+            return `${value}`;
+        }
+    }
+
     private emitEnum(e: EnumType, enumName: Name): void {
         this.emittedObjects.add(enumName);
         this.ensureBlankLine();
         this.emitDescription(this.descriptionForType(e));
         this.emitLine("\nexport const ", enumName, " = ", "S.Literal(");
         this.indent(() =>
-            this.forEachEnumCase(e, "none", (_, jsonName) => {
-                this.emitLine('"', stringEscape(jsonName), '",');
+            this.forEachEnumCase(e, "none", (_, enumValue) => {
+                this.emitLine('"', this.stringForPrimitive(enumValue), '",');
             })
         );
         this.emitLine(");");
