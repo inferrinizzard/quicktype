@@ -12,6 +12,7 @@ import {
     type EnumType,
     MapType,
     type ObjectType,
+    type SupportedEnumValue,
     type Type,
     type UnionType
 } from "../../Type";
@@ -59,11 +60,11 @@ export class Scala3Renderer extends ConvenienceRenderer {
     }
 
     protected makeUnionMemberNamer(): Namer {
-        return funPrefixNamer("upper", s => scalaNameStyle(true, s) + "Value");
+        return funPrefixNamer("union", s => scalaNameStyle(true, s) + "Value");
     }
 
     protected makeEnumCaseNamer(): Namer {
-        return funPrefixNamer("upper", s => s.replace(" ", "")); // TODO - add backticks where appropriate
+        return funPrefixNamer("enum-cases", s => s.replace(" ", "")); // TODO - add backticks where appropriate
     }
 
     protected emitDescriptionBlock(lines: Sourcelike[]): void {
@@ -230,40 +231,40 @@ export class Scala3Renderer extends ConvenienceRenderer {
         this.emitLine(")");
     }
 
+    protected stringForPrimitive(value: SupportedEnumValue): string {
+        const needsBackticks = typeof value !== "string" || shouldAddBacktick(value) || value.includes(" ");
+
+        if (needsBackticks) {
+            return "`" + `${value}` + "`";
+        }
+
+        return `${value}`;
+    }
+
     protected emitEnumDefinition(e: EnumType, enumName: Name): void {
+        // FIXME: add option for Enumeration class
         this.emitDescription(this.descriptionForType(e));
 
-        this.emitBlock(
-            ["enum ", enumName, " : "],
-            () => {
-                let count = e.cases.size;
-                if (count > 0) {
-                    this.emitItem("\t case ");
+        if ([...e.cases.values()].some(enumCase => enumCase !== "string")) {
+            this.emitLine("type ", enumName, " = ");
+            this.forEachEnumCase(e, "none", (_, enumValue, position) => {
+                if (position === "first") {
+                    this.emitItem(this.stringForPrimitive(enumValue));
+                } else {
+                    this.emitItem([" | ", this.stringForPrimitive(enumValue)]);
                 }
-
-                this.forEachEnumCase(e, "none", (name, jsonName) => {
-                    if (!(jsonName == "")) {
-                        const backticks =
-                            shouldAddBacktick(jsonName) ||
-                            jsonName.includes(" ") ||
-                            !isNaN(parseInt(jsonName.charAt(0)));
-                        if (backticks) {
-                            this.emitItem("`");
-                        }
-
-                        this.emitItemOnce([name]);
-                        if (backticks) {
-                            this.emitItem("`");
-                        }
-
-                        if (--count > 0) this.emitItem([","]);
-                    } else {
-                        --count;
-                    }
-                });
-            },
-            "none"
-        );
+            });
+        } else {
+            this.emitBlock(
+                ["enum ", enumName, " : "],
+                () => {
+                    this.forEachEnumCase(e, "none", (_, enumValue) => {
+                        this.emitLine("case ", this.stringForPrimitive(enumValue));
+                    });
+                },
+                "none"
+            );
+        }
     }
 
     protected emitUnionDefinition(u: UnionType, unionName: Name): void {

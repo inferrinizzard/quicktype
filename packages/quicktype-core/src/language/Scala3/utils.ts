@@ -22,7 +22,7 @@ export const shouldAddBacktick = (paramName: string): boolean => {
         keywords.some(s => paramName === s) ||
         invalidSymbols.some(s => paramName.includes(s)) ||
         !isNaN(+parseFloat(paramName)) ||
-        !isNaN(parseInt(paramName.charAt(0)))
+        !isNaN(parseInt(paramName))
     );
 };
 
@@ -57,17 +57,6 @@ export function scalaNameStyle(isUpper: boolean, original: string): string {
         isStartCharacter
     );
 }
-
-/* function unicodeEscape(codePoint: number): string {
-	return "\\u" + intToHex(codePoint, 4);
-} */
-
-// const _stringEscape = utf32ConcatMap(escapeNonPrintableMapper(isPrintable, unicodeEscape));
-
-/* function stringEscape(s: string): string {
-	// "$this" is a template string in Kotlin so we have to escape $
-	return _stringEscape(s).replace(/\$/g, "\\$");
-} */
 
 export const upperNamingFunction = funPrefixNamer("upper", s => scalaNameStyle(true, s));
 export const lowerNamingFunction = funPrefixNamer("lower", s => scalaNameStyle(false, s));
