@@ -744,6 +744,9 @@ async function addTypesInSchema(
             }
 
             if (isConst) {
+                if (name === "null" && schema.const === null) {
+                    return true;
+                }
                 return name === (schema.type ?? typeof schema.const);
             }
 
