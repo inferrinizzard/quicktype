@@ -978,7 +978,7 @@ async function addTypesInSchema(
         );
 
         if (isConst) {
-            const typeofConst = typeof schema.const;
+            const typeofConst = schema.const === null ? "null" : typeof schema.const;
 
             if (typeofConst === "string") {
                 const stringEnumType = typeBuilder.getStringType(
