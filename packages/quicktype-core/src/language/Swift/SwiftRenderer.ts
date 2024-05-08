@@ -16,6 +16,7 @@ import {
     type ClassType,
     EnumType,
     MapType,
+    type SupportedEnumValue,
     type Type,
     type TypeKind,
     type UnionType
@@ -649,6 +650,16 @@ encoder.dateEncodingStrategy = .formatted(formatter)`);
         });
     }
 
+    protected stringForPrimitive(enumValue: SupportedEnumValue): string {
+        if (typeof enumValue === "string") {
+            return `"${stringEscape(enumValue)}"`;
+        } else if (enumValue === null) {
+            return "nil";
+        } else {
+            return `${enumValue}`;
+        }
+    }
+
     private renderEnumDefinition(e: EnumType, enumName: Name): void {
         this.startFile(enumName);
 
@@ -660,14 +671,15 @@ encoder.dateEncodingStrategy = .formatted(formatter)`);
 
         if (this._options.justTypes) {
             this.emitBlockWithAccess(["enum ", enumName, protocolString], () => {
-                this.forEachEnumCase(e, "none", name => {
-                    this.emitLine("case ", name);
+                this.forEachEnumCase(e, "none", enumKey => {
+                    this.emitLine("case ", enumKey);
                 });
             });
         } else {
             this.emitBlockWithAccess(["enum ", enumName, protocolString], () => {
-                this.forEachEnumCase(e, "none", (name, jsonName) => {
-                    this.emitLine("case ", name, ' = "', stringEscape(jsonName), '"');
+                this.forEachEnumCase(e, "none", (enumKey, enumValue) => {
+                    // FIXME: double-check this
+                    this.emitLine("case ", enumKey, " = ", this.stringForPrimitive(enumValue));
                 });
             });
         }
