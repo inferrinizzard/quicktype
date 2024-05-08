@@ -1,0 +1,77 @@
+{
+    
+	"id": "http://json-schema.org/geo",
+	"$schema": "http://json-schema.org/draft-06/schema#",
+	"description": "Testing JSON Schema const, enum, union values",
+	"type": "object",
+	"properties": {
+			"AtestConstString": {
+					"const": "str"
+			},
+			"BtestConstInteger": {
+					"const": 1
+			},
+			"CtestConstFloat": {
+					"const": 2.3
+			},
+			"DtestConstBoolean": {
+					"const": false
+			},
+			"EtestConstNull": {
+					"const": null
+			},
+			"FtestEnumString": {
+					"enum": ["a", "b", "c"]
+			},
+			"GtestEnumInteger": {
+					"enum": [4, 5, 6]
+			},
+			"HtestEnumMixed": {
+					"enum": [true, 7.8, "foo", 1, null]
+			},
+			"ItestNumber": {
+					"type": "number"
+			},
+			"JtestString": {
+					"type": "string"
+			},
+			"KtestBoolean": {
+					"type": "boolean"
+			},
+			"LtestOneOfUnionPrimitive": {
+					"oneOf": [
+							{ "type": "string" },
+							{ "type": "number" },
+							{ "type": "integer" },
+							{ "type": "null" },
+							{ "type": "boolean" }
+					]
+			},
+			"MtestOneOfUnionConst": {
+					"oneOf": [
+							{ "const": "str" },
+							{ "const": 1 },
+							{ "const": 2.3 },
+							{ "const": false },
+							{ "const": null }
+					]
+			},
+			"NtestOneOfUnionComplex": {
+					"oneOf": [
+							{ "type": "number" },
+							{ "const": "str" },
+							{
+									"type": "array",
+									"items": { "type": "string" }
+							},
+							{
+									"type": "object",
+									"properties": {
+											"foo": { "type": "null" }
+									}
+							}
+					]
+			}
+	},
+	"additionalProperties": false
+}
