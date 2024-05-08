@@ -969,7 +969,7 @@ async function addTypesInSchema(
             schema.required !== undefined;
         const types: TypeRef[] = [];
 
-            const numberAttributes = combineProducedAttributes(({ forNumber }) => forNumber);
+        const numberAttributes = combineProducedAttributes(({ forNumber }) => forNumber);
 
         const stringAttributes = combineTypeAttributes(
             "union",
@@ -978,7 +978,7 @@ async function addTypesInSchema(
         );
 
         if (isConst) {
-            const typeofConst = schema.const === null ? "null" : typeof schema.const;
+            const typeofConst = findJsonSchemaPrimitiveType(schema.const);
 
             if (typeofConst === "string") {
                 const stringEnumType = typeBuilder.getStringType(
@@ -999,13 +999,7 @@ async function addTypesInSchema(
         }
 
         if (needEnum) {
-            // types.push(typeBuilder.getEnumType(inferredAttributes, new Set(enumArray)));
-            types.push(
-                typeBuilder.getEnumType(
-                inferredAttributes,
-                    new Set(enumArray?.map(e => (e === null ? "null" : e.toString())))
-                )
-            );
+            types.push(typeBuilder.getEnumType(inferredAttributes, new Set(enumArray)));
         }
 
         if (needUnion) {
@@ -1020,11 +1014,11 @@ async function addTypesInSchema(
                     jsonSchemaTypeToPrimitiveTypeKindMap[name as keyof typeof jsonSchemaTypeToPrimitiveTypeKindMap];
 
                 if (name === "string") {
-                unionTypes.push(makeStringType(stringAttributes));
+                    unionTypes.push(makeStringType(stringAttributes));
                 } else {
                     const attributes = isNumberTypeKind(kind) ? numberAttributes : undefined;
                     unionTypes.push(typeBuilder.getPrimitiveType(kind, attributes));
-            }
+                }
             });
 
             if (includeArray) {
@@ -1036,7 +1030,7 @@ async function addTypesInSchema(
             }
 
             if (unionTypes.length) {
-            types.push(typeBuilder.getUniqueUnionType(inferredAttributes, new Set(unionTypes)));
+                types.push(typeBuilder.getUniqueUnionType(inferredAttributes, new Set(unionTypes)));
             }
         }
 

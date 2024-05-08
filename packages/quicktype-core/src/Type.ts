@@ -718,14 +718,9 @@ export class EnumType extends Type {
     public constructor(
         typeRef: TypeRef,
         graph: TypeGraph,
-        public readonly _cases: EnumCases
+        public readonly cases: EnumCases
     ) {
         super(typeRef, graph);
-    }
-
-    // FIXME: remove this only all languages support rendering non-string consts and enums
-    public get cases(): ReadonlySet<string> {
-        return new Set([...this._cases.values()].map(enumCase => (enumCase === null ? "null" : enumCase.toString())));
     }
 
     public get isNullable(): boolean {
