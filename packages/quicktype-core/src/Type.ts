@@ -704,10 +704,13 @@ export class MapType extends ObjectType {
     }
 }
 
-export function enumTypeIdentity(attributes: TypeAttributes, cases: ReadonlySet<string>): MaybeTypeIdentity {
+export function enumTypeIdentity(attributes: TypeAttributes, cases: EnumCases): MaybeTypeIdentity {
     if (hasUniqueIdentityAttributes(attributes)) return undefined;
     return new TypeIdentity("enum", [identityAttributes(attributes), cases]);
 }
+
+export type SupportedEnumValue = string | number | boolean | null;
+export type EnumCases = ReadonlySet<SupportedEnumValue>;
 
 export class EnumType extends Type {
     public readonly kind = "enum";
@@ -715,9 +718,14 @@ export class EnumType extends Type {
     public constructor(
         typeRef: TypeRef,
         graph: TypeGraph,
-        public readonly cases: ReadonlySet<string>
+        public readonly _cases: EnumCases
     ) {
         super(typeRef, graph);
+    }
+
+    // FIXME: remove this only all languages support rendering non-string consts and enums
+    public get cases(): ReadonlySet<string> {
+        return new Set([...this._cases.values()].map(enumCase => (enumCase === null ? "null" : enumCase.toString())));
     }
 
     public get isNullable(): boolean {

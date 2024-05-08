@@ -10,6 +10,7 @@ import {
 } from "./attributes/TypeAttributes";
 import { assert, assertNever, defined, panic } from "./support/Support";
 import {
+    type EnumCases,
     type PrimitiveStringTypeKind,
     type PrimitiveTypeKind,
     type Type,
@@ -173,7 +174,7 @@ export class UnionAccumulator<TArray, TObject> implements UnionTypeProvider<TArr
         addAttributesToBuilder(this._nonStringTypeAttributes, "object", attributes);
     }
 
-    public addEnum(cases: ReadonlySet<string>, attributes: TypeAttributes): void {
+    public addEnum(cases: EnumCases, attributes: TypeAttributes): void {
         const maybeStringAttributes = this._stringTypeAttributes.get("string");
         if (maybeStringAttributes !== undefined) {
             addAttributesToBuilder(this._stringTypeAttributes, "string", attributes);

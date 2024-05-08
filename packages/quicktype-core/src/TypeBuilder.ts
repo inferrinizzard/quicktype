@@ -25,6 +25,7 @@ import {
     ArrayType,
     ClassProperty,
     ClassType,
+    type EnumCases,
     EnumType,
     IntersectionType,
     MapType,
@@ -361,7 +362,7 @@ export class TypeBuilder {
         );
     }
 
-    public getEnumType(attributes: TypeAttributes, cases: ReadonlySet<string>, forwardingRef?: TypeRef): TypeRef {
+    public getEnumType(attributes: TypeAttributes, cases: EnumCases, forwardingRef?: TypeRef): TypeRef {
         return this.getOrAddType(
             () => enumTypeIdentity(attributes, cases),
             tr => new EnumType(tr, this.typeGraph, cases),

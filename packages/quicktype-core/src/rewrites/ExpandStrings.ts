@@ -14,7 +14,7 @@ import { emptyTypeAttributes } from "../attributes/TypeAttributes";
 import { type GraphRewriteBuilder } from "../GraphRewriting";
 import { type RunContext } from "../Run";
 import { assert, defined } from "../support/Support";
-import { type PrimitiveType } from "../Type";
+import { type EnumCases, type PrimitiveType } from "../Type";
 import { type TypeGraph, type TypeRef } from "../TypeGraph";
 import { stringTypesForType } from "../TypeUtils";
 
@@ -26,7 +26,7 @@ const REQUIRED_OVERLAP = 3 / 4;
 export type EnumInference = "none" | "all" | "infer";
 
 interface EnumInfo {
-    cases: ReadonlySet<string>;
+    cases: EnumCases;
     numValues: number;
 }
 
@@ -34,11 +34,7 @@ function isOwnEnum({ numValues, cases }: EnumInfo): boolean {
     return numValues >= MIN_LENGTH_FOR_ENUM && cases.size < Math.sqrt(numValues);
 }
 
-function enumCasesOverlap(
-    newCases: ReadonlySet<string>,
-    existingCases: ReadonlySet<string>,
-    newAreSubordinate: boolean
-): boolean {
+function enumCasesOverlap(newCases: EnumCases, existingCases: EnumCases, newAreSubordinate: boolean): boolean {
     const smaller = newAreSubordinate ? newCases.size : Math.min(newCases.size, existingCases.size);
     const overlap = setIntersect(newCases, existingCases).size;
     return overlap >= smaller * REQUIRED_OVERLAP;
@@ -76,7 +72,7 @@ export function expandStrings(ctx: RunContext, graph: TypeGraph, inference: Enum
     }
 
     const enumInfos = new Map<PrimitiveType, EnumInfo>();
-    const enumSets: Array<ReadonlySet<string>> = [];
+    const enumSets: EnumCases[] = [];
 
     if (inference !== "none") {
         for (const t of allStrings) {
@@ -87,7 +83,7 @@ export function expandStrings(ctx: RunContext, graph: TypeGraph, inference: Enum
 
         // FIXME: refactor this
         // eslint-disable-next-line no-inner-declarations
-        function findOverlap(newCases: ReadonlySet<string>, newAreSubordinate: boolean): number {
+        function findOverlap(newCases: EnumCases, newAreSubordinate: boolean): number {
             return enumSets.findIndex(s => enumCasesOverlap(newCases, s, newAreSubordinate));
         }
 

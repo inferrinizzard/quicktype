@@ -2,7 +2,7 @@ import { EqualityMap, mapMap } from "collection-utils";
 
 import { type TypeAttributes, combineTypeAttributes, emptyTypeAttributes } from "./attributes/TypeAttributes";
 import { assert, indentationString, panic } from "./support/Support";
-import { type ClassProperty, type MaybeTypeIdentity, type PrimitiveTypeKind, type Type } from "./Type";
+import { type ClassProperty, type EnumCases, type MaybeTypeIdentity, type PrimitiveTypeKind, type Type } from "./Type";
 // eslint-disable-next-line import/no-cycle
 import { type StringTypeMapping, TypeBuilder } from "./TypeBuilder";
 import {
@@ -111,7 +111,7 @@ export class TypeReconstituter<TBuilder extends BaseGraphRewriteBuilder> {
         this.register(this.builderForNewType().getPrimitiveType(kind, this._typeAttributes, this._forwardingRef));
     }
 
-    public getEnumType(cases: ReadonlySet<string>): void {
+    public getEnumType(cases: EnumCases): void {
         this.register(this.builderForNewType().getEnumType(this._typeAttributes, cases, this._forwardingRef));
     }
 
