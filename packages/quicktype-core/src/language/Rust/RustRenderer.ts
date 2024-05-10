@@ -30,7 +30,7 @@ export class RustRenderer extends ConvenienceRenderer {
     public constructor(
         targetLanguage: TargetLanguage,
         renderContext: RenderContext,
-        private readonly _options: OptionValues<typeof rustOptions>
+        protected readonly _options: OptionValues<typeof rustOptions>
     ) {
         super(targetLanguage, renderContext);
     }
@@ -71,7 +71,7 @@ export class RustRenderer extends ConvenienceRenderer {
         return "/// ";
     }
 
-    private nullableRustType(t: Type, withIssues: boolean): Sourcelike {
+    protected nullableRustType(t: Type, withIssues: boolean): Sourcelike {
         return ["Option<", this.breakCycle(t, withIssues), ">"];
     }
 
@@ -80,7 +80,7 @@ export class RustRenderer extends ConvenienceRenderer {
         return kind === "array" || kind === "map";
     }
 
-    private rustType(t: Type, withIssues = false): Sourcelike {
+    protected rustType(t: Type, withIssues = false): Sourcelike {
         return matchType<Sourcelike>(
             t,
             _anyType => maybeAnnotated(withIssues, anyTypeIssueAnnotation, "Option<serde_json::Value>"),
@@ -111,14 +111,24 @@ export class RustRenderer extends ConvenienceRenderer {
         );
     }
 
-    private breakCycle(t: Type, withIssues: boolean): Sourcelike {
+    protected emitDeriveHeader(): void {
+        this.emitLine(
+            "#[derive(",
+            this._options.deriveDebug ? "Debug, " : "",
+            this._options.deriveClone ? "Clone, " : "",
+            this._options.derivePartialEq ? "PartialEq, " : "",
+            "Serialize, Deserialize)]"
+        );
+    }
+
+    protected breakCycle(t: Type, withIssues: boolean): Sourcelike {
         const rustType = this.rustType(t, withIssues);
         const isCycleBreaker = this.isCycleBreakerType(t);
 
         return isCycleBreaker ? ["Box<", rustType, ">"] : rustType;
     }
 
-    private emitRenameAttribute(
+    protected emitRenameAttribute(
         propName: Name,
         jsonName: string,
         defaultNamingStyle: string,
@@ -133,14 +143,14 @@ export class RustRenderer extends ConvenienceRenderer {
         }
     }
 
-    private emitSkipSerializeNone(t: Type): void {
+    protected emitSkipSerializeNone(t: Type): void {
         if (t instanceof UnionType) {
             const nullable = nullableFromUnion(t);
             if (nullable !== null) this.emitLine('#[serde(skip_serializing_if = "Option::is_none")]');
         }
     }
 
-    private get visibility(): string {
+    protected get visibility(): string {
         if (this._options.visibility === Visibility.Crate) {
             return "pub(crate) ";
         } else if (this._options.visibility === Visibility.Public) {
@@ -152,13 +162,7 @@ export class RustRenderer extends ConvenienceRenderer {
 
     protected emitStructDefinition(c: ClassType, className: Name): void {
         this.emitDescription(this.descriptionForType(c));
-        this.emitLine(
-            "#[derive(",
-            this._options.deriveDebug ? "Debug, " : "",
-            this._options.deriveClone ? "Clone, " : "",
-            this._options.derivePartialEq ? "PartialEq, " : "",
-            "Serialize, Deserialize)]"
-        );
+        this.emitDeriveHeader();
 
         // List the possible naming styles for every class property
         const propertiesNamingStyles: { [key: string]: string[] } = {};
@@ -202,13 +206,7 @@ export class RustRenderer extends ConvenienceRenderer {
         }
 
         this.emitDescription(this.descriptionForType(u));
-        this.emitLine(
-            "#[derive(",
-            this._options.deriveDebug ? "Debug, " : "",
-            this._options.deriveClone ? "Clone, " : "",
-            this._options.derivePartialEq ? "PartialEq, " : "",
-            "Serialize, Deserialize)]"
-        );
+        this.emitDeriveHeader();
         this.emitLine("#[serde(untagged)]");
 
         const [, nonNulls] = removeNullFromUnion(u);
@@ -224,13 +222,7 @@ export class RustRenderer extends ConvenienceRenderer {
 
     protected emitEnumDefinition(e: EnumType, enumName: Name): void {
         this.emitDescription(this.descriptionForType(e));
-        this.emitLine(
-            "#[derive(",
-            this._options.deriveDebug ? "Debug, " : "",
-            this._options.deriveClone ? "Clone, " : "",
-            this._options.derivePartialEq ? "PartialEq, " : "",
-            "Serialize, Deserialize)]"
-        );
+        this.emitDeriveHeader();
 
         // List the possible naming styles for every enum case
         const enumCasesNamingStyles: { [key: string]: string[] } = {};
