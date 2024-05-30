@@ -747,12 +747,12 @@ export abstract class ConvenienceRenderer extends Renderer {
         f: (name: Name, t: Type, position: ForEachPosition) => void
     ): void {
         const iterateMembers = members ?? u.members;
-        if (sortOrder === null) {
+        if (sortOrder === null && this._alphabetizeProperties) {
             sortOrder = (n): string => defined(this.names.get(n));
         }
 
         const memberNames = mapFilter(defined(this._memberNamesStoreView).get(u), (_, t) => iterateMembers.has(t));
-        const sortedMemberNames = mapSortBy(memberNames, sortOrder);
+        const sortedMemberNames = sortOrder ? mapSortBy(memberNames, sortOrder) : memberNames;
         this.forEachWithBlankLines(sortedMemberNames, blankLocations, f);
     }
 
@@ -762,7 +762,9 @@ export abstract class ConvenienceRenderer extends Renderer {
         f: (name: Name, jsonName: string, position: ForEachPosition) => void
     ): void {
         const caseNames = defined(this._caseNamesStoreView).get(e);
-        const sortedCaseNames = mapSortBy(caseNames, n => defined(this.names.get(n)));
+        const sortedCaseNames = this._alphabetizeProperties
+            ? mapSortBy(caseNames, n => defined(this.names.get(n)))
+            : caseNames;
         this.forEachWithBlankLines(sortedCaseNames, blankLocations, f);
     }
 
