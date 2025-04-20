@@ -498,7 +498,7 @@ class Run implements RunContext {
         );
         assert(unionsDone, "We should only have to flatten unions once after making transformations");
 
-        // Sometimes we combine classes in ways that will the order come out
+        // Sometimes we combine classes in ways that make the order come out
         // differently compared to what it would be from the equivalent schema,
         // so we always just garbage collect to get a defined order and be done
         // with it.
